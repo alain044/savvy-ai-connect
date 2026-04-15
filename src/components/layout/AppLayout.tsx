@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, Receipt, PiggyBank, Target, Bot,
   Briefcase, TrendingUp, BarChart3, Brain, Bell,
-  Settings, ChevronLeft, ChevronRight
+  Settings, ChevronLeft, ChevronRight, LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import LanguageSelector from '@/components/LanguageSelector';
