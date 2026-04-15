@@ -101,6 +101,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
         <div className="p-3 border-t border-border space-y-2">
           <ThemeToggle collapsed={collapsed} />
           <LanguageSelector collapsed={collapsed} />
+          <SignOutButton collapsed={collapsed} />
         </div>
       </aside>
 
