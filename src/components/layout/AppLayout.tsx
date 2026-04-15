@@ -11,6 +11,22 @@ import LanguageSelector from '@/components/LanguageSelector';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 
+const SignOutButton = ({ collapsed }: { collapsed: boolean }) => {
+  const { signOut } = useAuth();
+  return (
+    <button
+      onClick={signOut}
+      className={cn(
+        'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium w-full transition-all duration-200 text-destructive hover:bg-destructive/10',
+        collapsed && 'justify-center px-2'
+      )}
+    >
+      <LogOut className="w-5 h-5 shrink-0" />
+      {!collapsed && <span>Sign Out</span>}
+    </button>
+  );
+};
+
 const AppLayout = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
   const location = useLocation();
