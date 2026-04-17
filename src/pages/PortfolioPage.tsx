@@ -31,6 +31,7 @@ interface Quote {
 
 const PortfolioPage = () => {
   const { user } = useAuth();
+  const { format, currency } = useCurrency();
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [quotes, setQuotes] = useState<Record<string, Quote>>({});
   const [loading, setLoading] = useState(true);
