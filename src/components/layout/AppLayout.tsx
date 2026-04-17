@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import LanguageSelector from '@/components/LanguageSelector';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const SignOutButton = ({ collapsed }: { collapsed: boolean }) => {
   const { signOut } = useAuth();
@@ -29,8 +30,28 @@ const SignOutButton = ({ collapsed }: { collapsed: boolean }) => {
 
 const AppLayout = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchCount = async () => {
+      const { count } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('read', false);
+      setUnreadCount(count ?? 0);
+    };
+    fetchCount();
+    const channel = supabase
+      .channel('layout-notif-count')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, fetchCount)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
 
   const financeItems = [
     { to: '/', icon: LayoutDashboard, label: t('nav.dashboard') },
@@ -51,20 +72,33 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
 
   const renderNavItem = ({ to, icon: Icon, label }: { to: string; icon: typeof LayoutDashboard; label: string }) => {
     const isActive = location.pathname === to;
+    const showBadge = to === '/notifications' && unreadCount > 0;
     return (
       <Link
         key={to}
         to={to}
         className={cn(
-          'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+          'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 relative',
           isActive
             ? 'bg-primary text-primary-foreground shadow-sm'
             : 'text-muted-foreground hover:bg-accent hover:text-foreground',
           collapsed && 'justify-center px-2'
         )}
       >
-        <Icon className="w-5 h-5 shrink-0" />
-        {!collapsed && <span>{label}</span>}
+        <div className="relative shrink-0">
+          <Icon className="w-5 h-5" />
+          {showBadge && collapsed && (
+            <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
+        </div>
+        {!collapsed && <span className="flex-1">{label}</span>}
+        {showBadge && !collapsed && (
+          <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-xs font-bold flex items-center justify-center">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
       </Link>
     );
   };

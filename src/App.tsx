@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import AppLayout from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
 import Expenses from "./pages/Expenses";
@@ -37,8 +38,9 @@ const ProtectedRoutes = () => {
   if (!user) return <Navigate to="/auth" replace />;
 
   return (
-    <AppLayout>
-      <Routes>
+    <CurrencyProvider>
+      <AppLayout>
+        <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/expenses" element={<Expenses />} />
         <Route path="/budgets" element={<Budgets />} />
@@ -50,9 +52,10 @@ const ProtectedRoutes = () => {
         <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </AppLayout>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AppLayout>
+    </CurrencyProvider>
   );
 };
 

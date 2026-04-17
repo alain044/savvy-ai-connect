@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,7 @@ interface Quote {
 
 const PortfolioPage = () => {
   const { user } = useAuth();
+  const { format, currency } = useCurrency();
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [quotes, setQuotes] = useState<Record<string, Quote>>({});
   const [loading, setLoading] = useState(true);
@@ -155,14 +157,14 @@ const PortfolioPage = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Portfolio Value</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold">${totals.value.toFixed(2)}</p></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Portfolio Value ({currency})</CardTitle></CardHeader>
+          <CardContent><p className="text-2xl font-bold">{format(totals.value)}</p></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Cost</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold">${totals.cost.toFixed(2)}</p></CardContent></Card>
+          <CardContent><p className="text-2xl font-bold">{format(totals.cost)}</p></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Gain / Loss</CardTitle></CardHeader>
           <CardContent>
             <p className={`text-2xl font-bold ${gain >= 0 ? 'text-green-500' : 'text-destructive'}`}>
-              {gain >= 0 ? '+' : ''}${gain.toFixed(2)} ({gainPct.toFixed(2)}%)
+              {gain >= 0 ? '+' : ''}{format(gain)} ({gainPct.toFixed(2)}%)
             </p>
           </CardContent></Card>
       </div>
@@ -192,9 +194,9 @@ const PortfolioPage = () => {
                         <div className="text-xs text-muted-foreground">{h.name}</div>
                       </TableCell>
                       <TableCell>{h.shares}</TableCell>
-                      <TableCell>${Number(h.avg_price).toFixed(2)}</TableCell>
-                      <TableCell>${price.toFixed(2)}</TableCell>
-                      <TableCell>${value.toFixed(2)}</TableCell>
+                      <TableCell>{format(Number(h.avg_price))}</TableCell>
+                      <TableCell>{format(price)}</TableCell>
+                      <TableCell>{format(value)}</TableCell>
                       <TableCell>
                         <span className={`flex items-center gap-1 ${change >= 0 ? 'text-green-500' : 'text-destructive'}`}>
                           {change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}

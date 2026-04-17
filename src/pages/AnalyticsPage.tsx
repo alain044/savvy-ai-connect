@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
@@ -16,6 +17,7 @@ const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent-foreground))', '#10b981
 
 const AnalyticsPage = () => {
   const { user } = useAuth();
+  const { format, currency } = useCurrency();
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [quotes, setQuotes] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -87,14 +89,14 @@ const AnalyticsPage = () => {
        ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Value</CardTitle></CardHeader>
-              <CardContent><p className="text-2xl font-bold">${totalValue.toFixed(2)}</p></CardContent></Card>
+            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Value ({currency})</CardTitle></CardHeader>
+              <CardContent><p className="text-2xl font-bold">{format(totalValue)}</p></CardContent></Card>
             <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Holdings</CardTitle></CardHeader>
               <CardContent><p className="text-2xl font-bold">{holdings.length}</p></CardContent></Card>
             <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Return</CardTitle></CardHeader>
               <CardContent>
                 <p className={`text-2xl font-bold ${totalGain >= 0 ? 'text-green-500' : 'text-destructive'}`}>
-                  {totalGain >= 0 ? '+' : ''}${totalGain.toFixed(2)}
+                  {totalGain >= 0 ? '+' : ''}{format(totalGain)}
                 </p>
               </CardContent></Card>
           </div>
@@ -108,7 +110,7 @@ const AnalyticsPage = () => {
                     <Pie data={allocationData} dataKey="value" nameKey="name" outerRadius={90} label={(e) => `${e.name} ${e.pct.toFixed(0)}%`}>
                       {allocationData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                     </Pie>
-                    <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+                    <Tooltip formatter={(v: number) => format(v)} />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -122,7 +124,7 @@ const AnalyticsPage = () => {
                     <Pie data={typeData} dataKey="value" nameKey="name" outerRadius={90} label={(e) => `${e.name}`}>
                       {typeData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                     </Pie>
-                    <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+                    <Tooltip formatter={(v: number) => format(v)} />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -137,7 +139,7 @@ const AnalyticsPage = () => {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis dataKey="symbol" />
                   <YAxis />
-                  <Tooltip formatter={(v: number) => `$${v}`} />
+                  <Tooltip formatter={(v: number) => format(v)} />
                   <Legend />
                   <Bar dataKey="Cost" fill="hsl(var(--muted-foreground))" />
                   <Bar dataKey="Value" fill="hsl(var(--primary))" />
