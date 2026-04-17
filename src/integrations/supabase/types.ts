@@ -53,6 +53,78 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          link: string | null
+          message: string
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          link?: string | null
+          message?: string
+          read?: boolean
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          link?: string | null
+          message?: string
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      price_alerts: {
+        Row: {
+          active: boolean
+          condition: string
+          created_at: string
+          id: string
+          last_triggered_at: string | null
+          name: string
+          symbol: string
+          target_price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          condition?: string
+          created_at?: string
+          id?: string
+          last_triggered_at?: string | null
+          name?: string
+          symbol: string
+          target_price: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          condition?: string
+          created_at?: string
+          id?: string
+          last_triggered_at?: string | null
+          name?: string
+          symbol?: string
+          target_price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           bio: string | null
