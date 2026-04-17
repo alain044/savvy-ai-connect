@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import LanguageSelector from '@/components/LanguageSelector';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const SignOutButton = ({ collapsed }: { collapsed: boolean }) => {
   const { signOut } = useAuth();
@@ -29,8 +30,28 @@ const SignOutButton = ({ collapsed }: { collapsed: boolean }) => {
 
 const AppLayout = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchCount = async () => {
+      const { count } = await supabase
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('read', false);
+      setUnreadCount(count ?? 0);
+    };
+    fetchCount();
+    const channel = supabase
+      .channel('layout-notif-count')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, fetchCount)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
 
   const financeItems = [
     { to: '/', icon: LayoutDashboard, label: t('nav.dashboard') },
