@@ -12,10 +12,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCurrency, CURRENCIES, CurrencyCode } from '@/contexts/CurrencyContext';
 
 const SettingsPage = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { setCurrency: setGlobalCurrency } = useCurrency();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -85,6 +87,7 @@ const SettingsPage = () => {
     }).eq('user_id', user.id);
     setSaving(false);
     if (error) { toast.error('Failed to save profile'); return; }
+    await setGlobalCurrency(profile.currency as CurrencyCode);
     toast.success('Profile saved successfully!');
   };
 
@@ -182,11 +185,9 @@ const SettingsPage = () => {
                   <Select value={profile.currency} onValueChange={(v) => setProfile({ ...profile, currency: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="USD">USD ($)</SelectItem>
-                      <SelectItem value="EUR">EUR (€)</SelectItem>
-                      <SelectItem value="GBP">GBP (£)</SelectItem>
-                      <SelectItem value="RWF">RWF (FRw)</SelectItem>
-                      <SelectItem value="CNY">CNY (¥)</SelectItem>
+                      {CURRENCIES.map(c => (
+                        <SelectItem key={c.code} value={c.code}>{c.code} ({c.symbol}) — {c.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
