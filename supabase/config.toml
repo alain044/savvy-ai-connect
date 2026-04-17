@@ -1,1 +1,7 @@
 project_id = "ydyrvlsvzukwxyjlieme"
+
+[functions.market-quotes]
+verify_jwt = false
+
+[functions.portfolio-advisor]
+verify_jwt = false

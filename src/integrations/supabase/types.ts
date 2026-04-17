@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      holdings: {
+        Row: {
+          asset_type: string
+          avg_price: number
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          shares: number
+          symbol: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asset_type?: string
+          avg_price?: number
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          shares?: number
+          symbol: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asset_type?: string
+          avg_price?: number
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          shares?: number
+          symbol?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           bio: string | null
@@ -73,6 +112,33 @@ export type Database = {
           notifications?: Json | null
           preferences?: Json | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      watchlist: {
+        Row: {
+          asset_type: string
+          created_at: string
+          id: string
+          name: string
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          asset_type?: string
+          created_at?: string
+          id?: string
+          name?: string
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          asset_type?: string
+          created_at?: string
+          id?: string
+          name?: string
+          symbol?: string
           user_id?: string
         }
         Relationships: []
