@@ -2,8 +2,8 @@ import { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  LayoutDashboard, Receipt, PiggyBank, Target, Bot,
-  Briefcase, TrendingUp, BarChart3, Brain, Bell,
+  LayoutDashboard, Receipt, PiggyBank, Target, Sparkles,
+  Briefcase, TrendingUp, BarChart3, Bell,
   Settings, ChevronLeft, ChevronRight, LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -58,14 +58,13 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
     { to: '/expenses', icon: Receipt, label: t('nav.expenses') },
     { to: '/budgets', icon: PiggyBank, label: t('nav.budgets') },
     { to: '/savings', icon: Target, label: t('nav.savings') },
-    { to: '/finance-advisor', icon: Bot, label: t('nav.financeAI') },
   ];
 
   const portfolioItems = [
     { to: '/portfolio', icon: Briefcase, label: t('nav.portfolio') },
     { to: '/market', icon: TrendingUp, label: t('nav.market') },
-    { to: '/portfolio-advisor', icon: Brain, label: t('nav.portfolioAI') },
     { to: '/analytics', icon: BarChart3, label: t('nav.analytics') },
+    { to: '/ai-insights', icon: Sparkles, label: t('nav.aiInsights') },
     { to: '/notifications', icon: Bell, label: t('nav.notifications') },
     { to: '/settings', icon: Settings, label: t('nav.settings') },
   ];
