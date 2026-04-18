@@ -11,10 +11,9 @@ import Index from "./pages/Index";
 import Expenses from "./pages/Expenses";
 import Budgets from "./pages/Budgets";
 import Savings from "./pages/Savings";
-import FinanceAIAdvisor from "./pages/FinanceAIAdvisor";
+import AIInsights from "./pages/AIInsights";
 import PortfolioPage from "./pages/PortfolioPage";
 import MarketDataPage from "./pages/MarketDataPage";
-import PortfolioAIAdvisor from "./pages/PortfolioAIAdvisor";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -45,10 +44,12 @@ const ProtectedRoutes = () => {
         <Route path="/expenses" element={<Expenses />} />
         <Route path="/budgets" element={<Budgets />} />
         <Route path="/savings" element={<Savings />} />
-        <Route path="/finance-advisor" element={<FinanceAIAdvisor />} />
         <Route path="/portfolio" element={<PortfolioPage />} />
         <Route path="/market" element={<MarketDataPage />} />
-        <Route path="/portfolio-advisor" element={<PortfolioAIAdvisor />} />
+        <Route path="/ai-insights" element={<AIInsights />} />
+        {/* Legacy redirects */}
+        <Route path="/finance-advisor" element={<Navigate to="/ai-insights" replace />} />
+        <Route path="/portfolio-advisor" element={<Navigate to="/ai-insights" replace />} />
         <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/settings" element={<SettingsPage />} />

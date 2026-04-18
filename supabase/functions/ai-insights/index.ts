@@ -7,7 +7,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, portfolio } = await req.json();
+    const { messages, portfolio, finance } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       return new Response(JSON.stringify({ error: "LOVABLE_API_KEY missing" }), {
@@ -16,13 +16,20 @@ Deno.serve(async (req) => {
       });
     }
 
-    const systemPrompt = `You are an expert investment advisor for the Savvy AI platform.
-Provide clear, actionable insights about portfolio diversification, risk, and opportunities.
-Always remind users that this is educational information, not financial advice.
-Be concise and use markdown formatting with bullet points where helpful.
+    const systemPrompt = `You are Savvy AI Insights — a unified personal finance and investment advisor.
+You analyze BOTH the user's day-to-day finances (expenses, budgets, savings goals) AND their investment portfolio (holdings, allocation, risk).
 
-User's current portfolio:
-${JSON.stringify(portfolio ?? [], null, 2)}`;
+Guidelines:
+- Be concise, warm, and actionable. Use markdown with bullet points and short sections.
+- When relevant, connect the two domains (e.g., "your monthly surplus could fund this rebalance").
+- Always remind users this is educational, not personalized financial advice.
+- If data for one domain is missing, focus on what is available and gently suggest adding the missing data.
+
+User's investment portfolio (${portfolio?.length ?? 0} holdings):
+${JSON.stringify(portfolio ?? [], null, 2)}
+
+User's finance snapshot:
+${JSON.stringify(finance ?? {}, null, 2)}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -67,7 +74,7 @@ ${JSON.stringify(portfolio ?? [], null, 2)}`;
       },
     });
   } catch (e) {
-    console.error("portfolio-advisor error", e);
+    console.error("ai-insights error", e);
     return new Response(JSON.stringify({ error: String(e) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

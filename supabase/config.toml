@@ -3,7 +3,7 @@ project_id = "ydyrvlsvzukwxyjlieme"
 [functions.market-quotes]
 verify_jwt = false
 
-[functions.portfolio-advisor]
+[functions.ai-insights]
 verify_jwt = false
 
 [functions.exchange-rates]
