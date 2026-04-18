@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Sparkles, Send, Brain, Wallet, TrendingUp, Mic, MicOff, Paperclip, X, FileText, Image as ImageIcon } from 'lucide-react';
+import { Sparkles, Send, Brain, Wallet, TrendingUp, Mic, MicOff, Paperclip, X, FileText, Image as ImageIcon, Volume2, Square } from 'lucide-react';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 
