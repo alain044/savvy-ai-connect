@@ -69,9 +69,45 @@ const AIInsights = () => {
   const [portfolio, setPortfolio] = useState<any[]>([]);
   const [pendingFiles, setPendingFiles] = useState<Attachment[]>([]);
   const [listening, setListening] = useState(false);
+  const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
+
+  // Stop any ongoing speech when leaving the page
+  useEffect(() => () => { window.speechSynthesis?.cancel(); }, []);
+
+  const stripMarkdown = (md: string) =>
+    md
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/[*_~#>]+/g, '')
+      .replace(/\n{2,}/g, '. ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const speak = (idx: number, text: string) => {
+    if (!('speechSynthesis' in window)) {
+      toast.error('Text-to-speech not supported in this browser.');
+      return;
+    }
+    if (speakingIdx === idx) {
+      window.speechSynthesis.cancel();
+      setSpeakingIdx(null);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(stripMarkdown(text));
+    utter.rate = 1;
+    utter.pitch = 1;
+    utter.lang = navigator.language || 'en-US';
+    utter.onend = () => setSpeakingIdx(s => (s === idx ? null : s));
+    utter.onerror = () => setSpeakingIdx(s => (s === idx ? null : s));
+    setSpeakingIdx(idx);
+    window.speechSynthesis.speak(utter);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -306,8 +342,20 @@ const AIInsights = () => {
                   m.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
                 }`}>
                   {m.role === 'assistant' ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-headings:my-2">
-                      <ReactMarkdown>{(m.content as string) || (loading && i === messages.length - 1 ? '...' : '')}</ReactMarkdown>
+                    <div className="space-y-1">
+                      <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-headings:my-2">
+                        <ReactMarkdown>{(m.content as string) || (loading && i === messages.length - 1 ? '...' : '')}</ReactMarkdown>
+                      </div>
+                      {typeof m.content === 'string' && (m.content as string).trim() && !(loading && i === messages.length - 1) && (
+                        <button
+                          onClick={() => speak(i, m.content as string)}
+                          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
+                          title={speakingIdx === i ? 'Stop' : 'Read aloud'}
+                        >
+                          {speakingIdx === i ? <Square className="w-3 h-3 fill-current" /> : <Volume2 className="w-3 h-3" />}
+                          {speakingIdx === i ? 'Stop' : 'Listen'}
+                        </button>
+                      )}
                     </div>
                   ) : (
                     renderUserMessage(m)
