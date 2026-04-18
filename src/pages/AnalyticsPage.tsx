@@ -107,7 +107,7 @@ const AnalyticsPage = () => {
               <CardContent className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={allocationData} dataKey="value" nameKey="name" outerRadius={90} label={(e) => `${e.name} ${e.pct.toFixed(0)}%`}>
+                    <Pie data={allocationData} dataKey="value" nameKey="name" outerRadius={90} label={(e: any) => `${e.name} ${Number(e.pct ?? 0).toFixed(0)}%`}>
                       {allocationData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                     </Pie>
                     <Tooltip formatter={(v: number) => format(v)} />

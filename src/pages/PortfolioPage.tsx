@@ -51,9 +51,8 @@ const PortfolioPage = () => {
     if (symbols.length === 0) return;
     setRefreshing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('market-quotes', {
+      await supabase.functions.invoke('market-quotes', {
         method: 'GET',
-        // @ts-expect-error supabase-js v2 supports this for GET
         body: undefined,
       });
       // Use direct fetch for query params
