@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -30,6 +31,7 @@ interface Quote {
 }
 
 const PortfolioPage = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { format, currency } = useCurrency();
   const [holdings, setHoldings] = useState<Holding[]>([]);
@@ -51,11 +53,7 @@ const PortfolioPage = () => {
     if (symbols.length === 0) return;
     setRefreshing(true);
     try {
-      await supabase.functions.invoke('market-quotes', {
-        method: 'GET',
-        body: undefined,
-      });
-      // Use direct fetch for query params
+      await supabase.functions.invoke('market-quotes', { method: 'GET', body: undefined });
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/market-quotes?action=quotes&symbols=${encodeURIComponent(symbols.join(','))}`;
       const r = await fetch(url, { headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY } });
       const json = await r.json();
@@ -64,11 +62,11 @@ const PortfolioPage = () => {
       setQuotes(map);
     } catch (e) {
       console.error(e);
-      toast.error('Failed to fetch quotes');
+      toast.error(t('portfolio.fetchFailed'));
     } finally {
       setRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { fetchHoldings(); }, [fetchHoldings]);
   useEffect(() => {
@@ -77,7 +75,7 @@ const PortfolioPage = () => {
 
   const handleAdd = async () => {
     if (!user || !form.symbol || !form.shares || !form.avg_price) {
-      toast.error('Fill all required fields'); return;
+      toast.error(t('portfolio.fillRequired')); return;
     }
     const { error } = await supabase.from('holdings').insert({
       user_id: user.id,
@@ -88,7 +86,7 @@ const PortfolioPage = () => {
       avg_price: parseFloat(form.avg_price),
     });
     if (error) { toast.error(error.message); return; }
-    toast.success('Holding added');
+    toast.success(t('portfolio.added'));
     setOpen(false);
     setForm({ symbol: '', name: '', asset_type: 'stock', shares: '', avg_price: '' });
     fetchHoldings();
@@ -97,7 +95,7 @@ const PortfolioPage = () => {
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from('holdings').delete().eq('id', id);
     if (error) { toast.error(error.message); return; }
-    toast.success('Removed');
+    toast.success(t('portfolio.removed'));
     fetchHoldings();
   };
 
@@ -118,49 +116,49 @@ const PortfolioPage = () => {
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-accent"><Briefcase className="w-6 h-6 text-accent-foreground" /></div>
           <div>
-            <h1 className="text-2xl font-bold">Portfolio</h1>
-            <p className="text-sm text-muted-foreground">Manage your investment holdings.</p>
+            <h1 className="text-2xl font-bold">{t('portfolio.title')}</h1>
+            <p className="text-sm text-muted-foreground">{t('portfolio.subtitle')}</p>
           </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => fetchQuotes(holdings.map(h => h.symbol))} disabled={refreshing || !holdings.length}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />Refresh
+            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />{t('portfolio.refresh')}
           </Button>
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 mr-2" />Add Holding</Button></DialogTrigger>
+            <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 mr-2" />{t('portfolio.addHolding')}</Button></DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Add Holding</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{t('portfolio.addHolding')}</DialogTitle></DialogHeader>
               <div className="space-y-3">
-                <div><Label>Symbol *</Label><Input value={form.symbol} onChange={e => setForm({ ...form, symbol: e.target.value })} placeholder="AAPL" /></div>
-                <div><Label>Company Name</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Apple Inc." /></div>
+                <div><Label>{t('portfolio.symbol')} *</Label><Input value={form.symbol} onChange={e => setForm({ ...form, symbol: e.target.value })} placeholder="AAPL" /></div>
+                <div><Label>{t('portfolio.companyName')}</Label><Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Apple Inc." /></div>
                 <div>
-                  <Label>Asset Type</Label>
+                  <Label>{t('portfolio.assetType')}</Label>
                   <Select value={form.asset_type} onValueChange={v => setForm({ ...form, asset_type: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="stock">Stock</SelectItem>
-                      <SelectItem value="etf">ETF</SelectItem>
-                      <SelectItem value="crypto">Crypto</SelectItem>
+                      <SelectItem value="stock">{t('portfolio.stock')}</SelectItem>
+                      <SelectItem value="etf">{t('portfolio.etf')}</SelectItem>
+                      <SelectItem value="crypto">{t('portfolio.crypto')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Shares *</Label><Input type="number" step="any" value={form.shares} onChange={e => setForm({ ...form, shares: e.target.value })} /></div>
-                  <div><Label>Avg Price *</Label><Input type="number" step="any" value={form.avg_price} onChange={e => setForm({ ...form, avg_price: e.target.value })} /></div>
+                  <div><Label>{t('portfolio.shares')} *</Label><Input type="number" step="any" value={form.shares} onChange={e => setForm({ ...form, shares: e.target.value })} /></div>
+                  <div><Label>{t('portfolio.avgPrice')} *</Label><Input type="number" step="any" value={form.avg_price} onChange={e => setForm({ ...form, avg_price: e.target.value })} /></div>
                 </div>
               </div>
-              <DialogFooter><Button onClick={handleAdd}>Add</Button></DialogFooter>
+              <DialogFooter><Button onClick={handleAdd}>{t('common.add')}</Button></DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Portfolio Value ({currency})</CardTitle></CardHeader>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t('portfolio.portfolioValue')} ({currency})</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold">{format(totals.value)}</p></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Cost</CardTitle></CardHeader>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t('portfolio.totalCost')}</CardTitle></CardHeader>
           <CardContent><p className="text-2xl font-bold">{format(totals.cost)}</p></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Gain / Loss</CardTitle></CardHeader>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t('portfolio.gainLoss')}</CardTitle></CardHeader>
           <CardContent>
             <p className={`text-2xl font-bold ${gain >= 0 ? 'text-green-500' : 'text-destructive'}`}>
               {gain >= 0 ? '+' : ''}{format(gain)} ({gainPct.toFixed(2)}%)
@@ -169,15 +167,15 @@ const PortfolioPage = () => {
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Holdings</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{t('portfolio.holdings')}</CardTitle></CardHeader>
         <CardContent>
-          {loading ? <p className="text-muted-foreground text-center py-8">Loading...</p> :
-            holdings.length === 0 ? <p className="text-muted-foreground text-center py-8">No holdings yet. Add your first one!</p> :
+          {loading ? <p className="text-muted-foreground text-center py-8">{t('common.loading')}</p> :
+            holdings.length === 0 ? <p className="text-muted-foreground text-center py-8">{t('portfolio.noHoldings')}</p> :
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Symbol</TableHead><TableHead>Shares</TableHead><TableHead>Avg Price</TableHead>
-                  <TableHead>Current</TableHead><TableHead>Value</TableHead><TableHead>Change</TableHead><TableHead></TableHead>
+                  <TableHead>{t('portfolio.symbol')}</TableHead><TableHead>{t('portfolio.shares')}</TableHead><TableHead>{t('portfolio.avgPrice')}</TableHead>
+                  <TableHead>{t('portfolio.current')}</TableHead><TableHead>{t('portfolio.value')}</TableHead><TableHead>{t('portfolio.change')}</TableHead><TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

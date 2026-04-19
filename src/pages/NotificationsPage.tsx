@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Bell, Check, Trash2, TrendingUp, Info, AlertTriangle, Target } from 'lucide-react';
@@ -29,6 +30,7 @@ const iconFor = (type: string) => {
 };
 
 const NotificationsPage = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +49,6 @@ const NotificationsPage = () => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Realtime
   useEffect(() => {
     if (!user) return;
     const channel = supabase
@@ -67,7 +68,7 @@ const NotificationsPage = () => {
   const markAllRead = async () => {
     if (!user) return;
     await supabase.from('notifications').update({ read: true }).eq('user_id', user.id).eq('read', false);
-    toast.success('All marked as read');
+    toast.success(t('notifications.allMarkedRead'));
     fetchData();
   };
 
@@ -84,15 +85,15 @@ const NotificationsPage = () => {
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-accent"><Bell className="w-6 h-6 text-accent-foreground" /></div>
           <div>
-            <h1 className="text-2xl font-bold">Notifications</h1>
+            <h1 className="text-2xl font-bold">{t('notifications.title')}</h1>
             <p className="text-sm text-muted-foreground">
-              {unread > 0 ? `${unread} unread` : 'All caught up'}
+              {unread > 0 ? t('notifications.unreadCount', { count: unread }) : t('notifications.allCaughtUp')}
             </p>
           </div>
         </div>
         {unread > 0 && (
           <Button variant="outline" size="sm" onClick={markAllRead}>
-            <Check className="w-4 h-4 mr-2" />Mark all read
+            <Check className="w-4 h-4 mr-2" />{t('notifications.markAllRead')}
           </Button>
         )}
       </div>
@@ -100,12 +101,12 @@ const NotificationsPage = () => {
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <p className="text-muted-foreground text-center py-12">Loading...</p>
+            <p className="text-muted-foreground text-center py-12">{t('common.loading')}</p>
           ) : notifications.length === 0 ? (
             <div className="text-center py-12 px-6">
               <Bell className="w-12 h-12 text-muted-foreground/50 mx-auto mb-3" />
-              <p className="text-muted-foreground">No notifications yet.</p>
-              <p className="text-xs text-muted-foreground mt-2">Set price alerts on the Market Data page.</p>
+              <p className="text-muted-foreground">{t('notifications.noneYet')}</p>
+              <p className="text-xs text-muted-foreground mt-2">{t('notifications.setupHint')}</p>
             </div>
           ) : (
             <div className="divide-y divide-border">
@@ -115,21 +116,21 @@ const NotificationsPage = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-medium text-foreground">{n.title}</p>
-                      {!n.read && <Badge variant="secondary" className="h-5 text-[10px]">NEW</Badge>}
+                      {!n.read && <Badge variant="secondary" className="h-5 text-[10px]">{t('notifications.newBadge')}</Badge>}
                     </div>
                     <p className="text-sm text-muted-foreground mt-0.5">{n.message}</p>
                     <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                       <span>{formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}</span>
-                      {n.link && <Link to={n.link} className="text-primary hover:underline">View</Link>}
+                      {n.link && <Link to={n.link} className="text-primary hover:underline">{t('notifications.view')}</Link>}
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
                     {!n.read && (
-                      <Button size="icon" variant="ghost" onClick={() => markRead(n.id)} title="Mark read">
+                      <Button size="icon" variant="ghost" onClick={() => markRead(n.id)} title={t('notifications.markRead')}>
                         <Check className="w-4 h-4" />
                       </Button>
                     )}
-                    <Button size="icon" variant="ghost" onClick={() => remove(n.id)} title="Delete">
+                    <Button size="icon" variant="ghost" onClick={() => remove(n.id)} title={t('notifications.delete')}>
                       <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>
                   </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -16,6 +17,7 @@ const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent-foreground))', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899'];
 
 const AnalyticsPage = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { format, currency } = useCurrency();
   const [holdings, setHoldings] = useState<Holding[]>([]);
@@ -76,24 +78,24 @@ const AnalyticsPage = () => {
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-lg bg-accent"><BarChart3 className="w-6 h-6 text-accent-foreground" /></div>
         <div>
-          <h1 className="text-2xl font-bold">Analytics</h1>
-          <p className="text-sm text-muted-foreground">Insights into your portfolio composition and performance.</p>
+          <h1 className="text-2xl font-bold">{t('analytics.title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('analytics.subtitle')}</p>
         </div>
       </div>
 
-      {loading ? <p className="text-muted-foreground">Loading...</p> :
+      {loading ? <p className="text-muted-foreground">{t('common.loading')}</p> :
        holdings.length === 0 ? (
          <Card><CardContent className="py-12 text-center text-muted-foreground">
-           Add holdings on the Portfolio page to see analytics.
+           {t('analytics.addHoldingsFirst')}
          </CardContent></Card>
        ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Value ({currency})</CardTitle></CardHeader>
+            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t('analytics.totalValue')} ({currency})</CardTitle></CardHeader>
               <CardContent><p className="text-2xl font-bold">{format(totalValue)}</p></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Holdings</CardTitle></CardHeader>
+            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t('analytics.holdings')}</CardTitle></CardHeader>
               <CardContent><p className="text-2xl font-bold">{holdings.length}</p></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Return</CardTitle></CardHeader>
+            <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t('analytics.totalReturn')}</CardTitle></CardHeader>
               <CardContent>
                 <p className={`text-2xl font-bold ${totalGain >= 0 ? 'text-green-500' : 'text-destructive'}`}>
                   {totalGain >= 0 ? '+' : ''}{format(totalGain)}
@@ -103,7 +105,7 @@ const AnalyticsPage = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card>
-              <CardHeader><CardTitle>Allocation by Holding</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{t('analytics.allocationByHolding')}</CardTitle></CardHeader>
               <CardContent className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -117,7 +119,7 @@ const AnalyticsPage = () => {
             </Card>
 
             <Card>
-              <CardHeader><CardTitle>Allocation by Asset Type</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{t('analytics.allocationByType')}</CardTitle></CardHeader>
               <CardContent className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -132,7 +134,7 @@ const AnalyticsPage = () => {
           </div>
 
           <Card>
-            <CardHeader><CardTitle>Cost vs. Current Value</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t('analytics.costVsValue')}</CardTitle></CardHeader>
             <CardContent className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={performanceData}>
