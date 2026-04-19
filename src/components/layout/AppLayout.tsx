@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const SignOutButton = ({ collapsed }: { collapsed: boolean }) => {
+  const { t } = useTranslation();
   const { signOut } = useAuth();
   return (
     <button
@@ -23,7 +24,7 @@ const SignOutButton = ({ collapsed }: { collapsed: boolean }) => {
       )}
     >
       <LogOut className="w-5 h-5 shrink-0" />
-      {!collapsed && <span>Sign Out</span>}
+      {!collapsed && <span>{t('nav.signOut')}</span>}
     </button>
   );
 };

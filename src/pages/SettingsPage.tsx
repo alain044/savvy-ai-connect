@@ -86,9 +86,9 @@ const SettingsPage = () => {
       currency: profile.currency,
     }).eq('user_id', user.id);
     setSaving(false);
-    if (error) { toast.error('Failed to save profile'); return; }
+    if (error) { toast.error(t('settings.saveFailed')); return; }
     await setGlobalCurrency(profile.currency as CurrencyCode);
-    toast.success('Profile saved successfully!');
+    toast.success(t('settings.saved'));
   };
 
   const handleSaveNotifications = async () => {
@@ -98,8 +98,8 @@ const SettingsPage = () => {
       notifications: notifications as any,
     }).eq('user_id', user.id);
     setSaving(false);
-    if (error) { toast.error('Failed to save notifications'); return; }
-    toast.success('Notifications saved successfully!');
+    if (error) { toast.error(t('settings.saveFailed')); return; }
+    toast.success(t('settings.notificationsSaved'));
   };
 
   const handleSavePreferences = async () => {
@@ -109,20 +109,20 @@ const SettingsPage = () => {
       preferences: preferences as any,
     }).eq('user_id', user.id);
     setSaving(false);
-    if (error) { toast.error('Failed to save preferences'); return; }
-    toast.success('Preferences saved successfully!');
+    if (error) { toast.error(t('settings.saveFailed')); return; }
+    toast.success(t('settings.preferencesSaved'));
   };
 
   const handleChangePassword = async () => {
     const newPw = (document.getElementById('newPassword') as HTMLInputElement)?.value;
     const confirmPw = (document.getElementById('confirmPassword') as HTMLInputElement)?.value;
-    if (!newPw || newPw.length < 6) { toast.error('Password must be at least 6 characters'); return; }
-    if (newPw !== confirmPw) { toast.error('Passwords do not match'); return; }
+    if (!newPw || newPw.length < 6) { toast.error(t('settings.passwordTooShort')); return; }
+    if (newPw !== confirmPw) { toast.error(t('settings.passwordMismatch')); return; }
     setSaving(true);
     const { error } = await supabase.auth.updateUser({ password: newPw });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
-    toast.success('Password updated successfully!');
+    toast.success(t('settings.passwordUpdated'));
   };
 
   if (loading) {
@@ -228,9 +228,9 @@ const SettingsPage = () => {
                   <Select value={preferences.startOfWeek} onValueChange={(v) => setPreferences({ ...preferences, startOfWeek: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="monday">Monday</SelectItem>
-                      <SelectItem value="sunday">Sunday</SelectItem>
-                      <SelectItem value="saturday">Saturday</SelectItem>
+                      <SelectItem value="monday">{t('settings.monday')}</SelectItem>
+                      <SelectItem value="sunday">{t('settings.sunday')}</SelectItem>
+                      <SelectItem value="saturday">{t('settings.saturday')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

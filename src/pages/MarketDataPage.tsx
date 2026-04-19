@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -35,8 +36,9 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 const MarketDataPage = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
-  const { format, convert, currency } = useCurrency();
+  const { format, currency } = useCurrency();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [watchlist, setWatchlist] = useState<WatchItem[]>([]);
@@ -92,7 +94,7 @@ const MarketDataPage = () => {
       setResults(json.results ?? []);
       if (json.results?.length) fetchQuotes(json.results.map((x: SearchResult) => x.symbol));
     } catch {
-      toast.error('Search failed');
+      toast.error(t('market.searchFailed'));
     } finally {
       setSearching(false);
     }
@@ -104,11 +106,11 @@ const MarketDataPage = () => {
       user_id: user.id, symbol: item.symbol, name: item.name, asset_type: item.type?.toLowerCase() ?? 'stock',
     });
     if (error) {
-      if (error.code === '23505') toast.info('Already in watchlist');
+      if (error.code === '23505') toast.info(t('market.alreadyInWatchlist'));
       else toast.error(error.message);
       return;
     }
-    toast.success(`${item.symbol} added`);
+    toast.success(t('market.addedToWatchlist', { symbol: item.symbol }));
     fetchWatchlist();
   };
 
@@ -126,7 +128,7 @@ const MarketDataPage = () => {
   const createAlert = async () => {
     if (!user || !alertDialog.symbol) return;
     const target = parseFloat(alertForm.target);
-    if (!target || target <= 0) { toast.error('Enter a valid target price (in USD)'); return; }
+    if (!target || target <= 0) { toast.error(t('market.invalidTarget')); return; }
     const { error } = await supabase.from('price_alerts').insert({
       user_id: user.id,
       symbol: alertDialog.symbol,
@@ -135,7 +137,7 @@ const MarketDataPage = () => {
       condition: alertForm.condition,
     });
     if (error) { toast.error(error.message); return; }
-    toast.success('Alert created');
+    toast.success(t('market.alertCreated'));
     setAlertDialog({ open: false });
     fetchAlerts();
   };
@@ -161,20 +163,20 @@ const MarketDataPage = () => {
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-accent"><TrendingUp className="w-6 h-6 text-accent-foreground" /></div>
           <div>
-            <h1 className="text-2xl font-bold">Market Data</h1>
-            <p className="text-sm text-muted-foreground">Live quotes — prices shown in {currency}, auto-refresh every 30s.</p>
+            <h1 className="text-2xl font-bold">{t('market.title')}</h1>
+            <p className="text-sm text-muted-foreground">{t('market.subtitle', { currency })}</p>
           </div>
         </div>
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Search Symbols</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{t('market.searchSymbols')}</CardTitle></CardHeader>
         <CardContent>
           <div className="flex gap-2">
-            <Input placeholder="Search Apple, BTC-USD, TSLA..." value={query}
+            <Input placeholder={t('market.searchPlaceholder')} value={query}
               onChange={e => setQuery(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSearch()} />
-            <Button onClick={handleSearch} disabled={searching}><Search className="w-4 h-4 mr-2" />Search</Button>
+            <Button onClick={handleSearch} disabled={searching}><Search className="w-4 h-4 mr-2" />{t('market.search')}</Button>
           </div>
           {results.length > 0 && (
             <div className="mt-4 space-y-2 max-h-72 overflow-y-auto">
@@ -195,7 +197,7 @@ const MarketDataPage = () => {
                           </div>
                         </div>
                       )}
-                      <Button size="icon" variant="ghost" onClick={() => addToWatchlist(r)} title="Add to watchlist">
+                      <Button size="icon" variant="ghost" onClick={() => addToWatchlist(r)} title={t('market.addToWatchlist')}>
                         <Plus className="w-4 h-4" />
                       </Button>
                     </div>
@@ -208,16 +210,16 @@ const MarketDataPage = () => {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><Star className="w-5 h-5" />Watchlist</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2"><Star className="w-5 h-5" />{t('market.watchlist')}</CardTitle></CardHeader>
         <CardContent>
           {watchlist.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">Search and add symbols to your watchlist.</p>
+            <p className="text-muted-foreground text-center py-8">{t('market.noWatchlist')}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Symbol</TableHead><TableHead>Price</TableHead><TableHead>Change</TableHead>
-                  <TableHead>Day Range</TableHead><TableHead>Alerts</TableHead><TableHead></TableHead>
+                  <TableHead>{t('market.symbol')}</TableHead><TableHead>{t('market.price')}</TableHead><TableHead>{t('market.change')}</TableHead>
+                  <TableHead>{t('market.dayRange')}</TableHead><TableHead>{t('market.alerts')}</TableHead><TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -250,7 +252,7 @@ const MarketDataPage = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon" title="Add price alert" onClick={() => openAlertDialog(w.symbol, w.name)}>
+                          <Button variant="ghost" size="icon" title={t('market.addPriceAlert')} onClick={() => openAlertDialog(w.symbol, w.name)}>
                             <BellPlus className="w-4 h-4" />
                           </Button>
                           <Button variant="ghost" size="icon" onClick={() => removeFromWatchlist(w.id)}>
@@ -268,16 +270,16 @@ const MarketDataPage = () => {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><Bell className="w-5 h-5" />Active Price Alerts</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2"><Bell className="w-5 h-5" />{t('market.activeAlerts')}</CardTitle></CardHeader>
         <CardContent>
           {alerts.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No alerts yet. Click the bell icon on a watchlist row to create one.</p>
+            <p className="text-muted-foreground text-center py-8">{t('market.noAlerts')}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Symbol</TableHead><TableHead>Condition</TableHead><TableHead>Target (USD)</TableHead>
-                  <TableHead>Target ({currency})</TableHead><TableHead>Active</TableHead><TableHead></TableHead>
+                  <TableHead>{t('market.symbol')}</TableHead><TableHead>{t('market.condition')}</TableHead><TableHead>{t('market.targetUsd')}</TableHead>
+                  <TableHead>{t('market.targetIn', { currency })}</TableHead><TableHead>{t('market.active')}</TableHead><TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -289,7 +291,7 @@ const MarketDataPage = () => {
                     </TableCell>
                     <TableCell>
                       <Badge variant={a.condition === 'above' ? 'default' : 'secondary'}>
-                        {a.condition === 'above' ? '↑ above' : '↓ below'}
+                        {a.condition === 'above' ? t('market.above') : t('market.below')}
                       </Badge>
                     </TableCell>
                     <TableCell>${Number(a.target_price).toFixed(2)}</TableCell>
@@ -311,30 +313,30 @@ const MarketDataPage = () => {
       <Dialog open={alertDialog.open} onOpenChange={(o) => setAlertDialog({ open: o, symbol: alertDialog.symbol, name: alertDialog.name })}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Price Alert for {alertDialog.symbol}</DialogTitle>
+            <DialogTitle>{t('market.priceAlertFor', { symbol: alertDialog.symbol })}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label>Condition</Label>
+              <Label>{t('market.condition')}</Label>
               <Select value={alertForm.condition} onValueChange={v => setAlertForm({ ...alertForm, condition: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="above">Price rises above</SelectItem>
-                  <SelectItem value="below">Price falls below</SelectItem>
+                  <SelectItem value="above">{t('market.priceRisesAbove')}</SelectItem>
+                  <SelectItem value="below">{t('market.priceFallsBelow')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Target Price (USD)</Label>
+              <Label>{t('market.targetPrice')}</Label>
               <Input type="number" step="any" value={alertForm.target} onChange={e => setAlertForm({ ...alertForm, target: e.target.value })} />
               {alertForm.target && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  ≈ {format(parseFloat(alertForm.target) || 0)} in {currency}
+                  {t('market.approxIn', { value: format(parseFloat(alertForm.target) || 0), currency })}
                 </p>
               )}
             </div>
           </div>
-          <DialogFooter><Button onClick={createAlert}>Create Alert</Button></DialogFooter>
+          <DialogFooter><Button onClick={createAlert}>{t('market.createAlert')}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
