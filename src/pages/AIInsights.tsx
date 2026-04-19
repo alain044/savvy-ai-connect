@@ -88,7 +88,7 @@ const AIInsights = () => {
 
   const speak = (idx: number, text: string) => {
     if (!('speechSynthesis' in window)) {
-      toast.error('Text-to-speech not supported in this browser.');
+      toast.error(t('aiInsights.ttsUnsupported'));
       return;
     }
     if (speakingIdx === idx) {
@@ -138,7 +138,7 @@ const AIInsights = () => {
     if (!files) return;
     for (const file of Array.from(files)) {
       if (file.size > 10 * 1024 * 1024) {
-        toast.error(`${file.name} is too large (max 10MB)`);
+        toast.error(t('aiInsights.tooLarge', { name: file.name }));
         continue;
       }
       const id = crypto.randomUUID();
@@ -147,16 +147,16 @@ const AIInsights = () => {
           const data = await fileToDataUrl(file);
           setPendingFiles(p => [...p, { id, kind: 'image', name: file.name, preview: data, imageData: data }]);
         } else if (file.type === 'application/pdf') {
-          toast.info(`Reading ${file.name}…`);
+          toast.info(t('aiInsights.reading', { name: file.name }));
           const text = await extractPdfText(file);
-          if (!text) { toast.error('Could not extract text from PDF'); continue; }
+          if (!text) { toast.error(t('aiInsights.pdfFailed')); continue; }
           setPendingFiles(p => [...p, { id, kind: 'pdf', name: file.name, text: text.slice(0, 30000) }]);
         } else {
-          toast.error(`Unsupported file type: ${file.type || 'unknown'}`);
+          toast.error(t('aiInsights.unsupportedType', { type: file.type || 'unknown' }));
         }
       } catch (err) {
         console.error(err);
-        toast.error(`Failed to process ${file.name}`);
+        toast.error(t('aiInsights.processFailed', { name: file.name }));
       }
     }
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -165,7 +165,7 @@ const AIInsights = () => {
   const toggleVoice = () => {
     const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) {
-      toast.error('Voice input not supported in this browser. Try Chrome or Edge.');
+      toast.error(t('aiInsights.voiceUnsupported'));
       return;
     }
     if (listening) {
@@ -180,7 +180,7 @@ const AIInsights = () => {
     rec.onend = () => setListening(false);
     rec.onerror = (e: any) => {
       setListening(false);
-      if (e.error !== 'aborted') toast.error(`Voice error: ${e.error}`);
+      if (e.error !== 'aborted') toast.error(t('aiInsights.voiceError', { error: e.error }));
     };
     rec.onresult = (e: any) => {
       let transcript = '';
@@ -195,7 +195,7 @@ const AIInsights = () => {
     if ((!text.trim() && pendingFiles.length === 0) || loading) return;
 
     const attachments = pendingFiles;
-    const displayText = text.trim() || (attachments.length ? '(attached files)' : '');
+    const displayText = text.trim() || (attachments.length ? t('aiInsights.attachedFiles') : '');
 
     // Build multimodal content for the API
     const parts: any[] = [];
@@ -233,7 +233,7 @@ const AIInsights = () => {
 
       if (!r.ok) {
         const err = await r.json().catch(() => ({}));
-        toast.error(err.error ?? 'AI request failed');
+        toast.error(err.error ?? t('aiInsights.requestFailed'));
         setLoading(false);
         return;
       }
@@ -274,7 +274,7 @@ const AIInsights = () => {
         }
       }
     } catch (e) {
-      toast.error('Connection error');
+      toast.error(t('aiInsights.connectionError'));
     } finally {
       setLoading(false);
     }
@@ -305,9 +305,9 @@ const AIInsights = () => {
           <Sparkles className="w-6 h-6 text-primary-foreground" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">AI Insights</h1>
+          <h1 className="text-2xl font-bold">{t('aiInsights.title')}</h1>
           <p className="text-sm text-muted-foreground">
-            Unified finance & portfolio advisor • {portfolio.length} holdings • Voice & file uploads supported
+            {t('aiInsights.subtitle', { count: portfolio.length })}
           </p>
         </div>
       </div>
@@ -320,17 +320,21 @@ const AIInsights = () => {
                 <Sparkles className="w-10 h-10 text-accent-foreground" />
               </div>
               <p className="text-muted-foreground max-w-md">
-                Ask anything about your money. Attach a receipt 📄, statement, or chart, or use the mic 🎤 to speak.
+                {t('aiInsights.empty')}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg w-full">
-                {SUGGESTIONS.map(({ icon: Icon, text }) => (
-                  <Button key={text} variant="outline" size="sm"
-                    className="text-left justify-start h-auto py-2 gap-2"
-                    onClick={() => send(text)}>
-                    <Icon className="w-4 h-4 shrink-0 text-primary" />
-                    <span className="text-xs">{text}</span>
-                  </Button>
-                ))}
+                {SUGGESTION_KEYS.map((key, i) => {
+                  const Icon = SUGGESTION_ICONS[i];
+                  const text = t(`aiInsights.suggestions.${key}`);
+                  return (
+                    <Button key={key} variant="outline" size="sm"
+                      className="text-left justify-start h-auto py-2 gap-2"
+                      onClick={() => send(text)}>
+                      <Icon className="w-4 h-4 shrink-0 text-primary" />
+                      <span className="text-xs">{text}</span>
+                    </Button>
+                  );
+                })}
               </div>
             </div>
           ) : (
@@ -348,10 +352,10 @@ const AIInsights = () => {
                         <button
                           onClick={() => speak(i, m.content as string)}
                           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
-                          title={speakingIdx === i ? 'Stop' : 'Read aloud'}
+                          title={speakingIdx === i ? t('aiInsights.stop') : t('aiInsights.readAloud')}
                         >
                           {speakingIdx === i ? <Square className="w-3 h-3 fill-current" /> : <Volume2 className="w-3 h-3" />}
-                          {speakingIdx === i ? 'Stop' : 'Listen'}
+                          {speakingIdx === i ? t('aiInsights.stop') : t('aiInsights.listen')}
                         </button>
                       )}
                     </div>
@@ -401,7 +405,7 @@ const AIInsights = () => {
             size="icon"
             onClick={() => fileInputRef.current?.click()}
             disabled={loading}
-            title="Attach image or PDF"
+            title={t('aiInsights.attach')}
           >
             <Paperclip className="w-4 h-4" />
           </Button>
@@ -411,12 +415,12 @@ const AIInsights = () => {
             size="icon"
             onClick={toggleVoice}
             disabled={loading}
-            title={listening ? 'Stop listening' : 'Start voice input'}
+            title={listening ? t('aiInsights.stopVoice') : t('aiInsights.startVoice')}
           >
             {listening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
           </Button>
           <Input
-            placeholder={listening ? 'Listening…' : 'Ask about your finances or portfolio...'}
+            placeholder={listening ? t('aiInsights.listening') : t('aiInsights.placeholder')}
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && send(input)}
