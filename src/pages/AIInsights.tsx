@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -27,12 +28,8 @@ interface Message {
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-const SUGGESTIONS = [
-  { icon: Wallet, text: 'How can I improve my monthly budget?' },
-  { icon: TrendingUp, text: 'How diversified is my portfolio?' },
-  { icon: Brain, text: 'Suggest a savings + investing strategy for me' },
-  { icon: Sparkles, text: 'What are my biggest financial risks right now?' },
-];
+const SUGGESTION_ICONS = [Wallet, TrendingUp, Brain, Sparkles];
+const SUGGESTION_KEYS = ['budget', 'diversification', 'strategy', 'risks'] as const;
 
 const readJson = <T,>(key: string, fallback: T): T => {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; }
@@ -62,6 +59,7 @@ const extractPdfText = async (file: File): Promise<string> => {
 };
 
 const AIInsights = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
