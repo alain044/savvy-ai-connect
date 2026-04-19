@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { toast } from '@/components/ui/sonner';
 import { Loader2 } from 'lucide-react';
 
 const AuthPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -35,7 +37,7 @@ const AuthPage = () => {
           },
         });
         if (error) throw error;
-        toast.success('Check your email to confirm your account!');
+        toast.success(t('auth.checkEmail'));
       }
     } catch (error: any) {
       toast.error(error.message);
@@ -49,39 +51,39 @@ const AuthPage = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-accent-foreground bg-clip-text text-transparent">
-            Savvy AI
+            {t('auth.title')}
           </CardTitle>
           <CardDescription>
-            {isLogin ? 'Sign in to your account' : 'Create a new account'}
+            {isLogin ? t('auth.signInToAccount') : t('auth.createNewAccount')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
+                <Label htmlFor="fullName">{t('auth.fullName')}</Label>
                 <Input
                   id="fullName"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="John Doe"
+                  placeholder={t('auth.namePlaceholder')}
                   required={!isLogin}
                 />
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('auth.email')}</Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder={t('auth.emailPlaceholder')}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('auth.password')}</Label>
               <Input
                 id="password"
                 type="password"
@@ -94,16 +96,16 @@ const AuthPage = () => {
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isLogin ? 'Sign In' : 'Sign Up'}
+              {isLogin ? t('auth.signIn') : t('auth.signUp')}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm text-muted-foreground">
-            {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
+            {isLogin ? t('auth.noAccount') : t('auth.hasAccount')}{' '}
             <button
               onClick={() => setIsLogin(!isLogin)}
               className="text-primary underline hover:no-underline"
             >
-              {isLogin ? 'Sign Up' : 'Sign In'}
+              {isLogin ? t('auth.signUp') : t('auth.signIn')}
             </button>
           </div>
         </CardContent>
