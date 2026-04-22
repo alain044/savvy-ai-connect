@@ -6,8 +6,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { OrganizationProvider, useOrganization } from "@/contexts/OrganizationContext";
 import AppLayout from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
+import OnboardingOrg from "./pages/OnboardingOrg";
+import TasksPage from "./pages/TasksPage";
 import Expenses from "./pages/Expenses";
 import Budgets from "./pages/Budgets";
 import Savings from "./pages/Savings";
@@ -37,13 +40,35 @@ const ProtectedRoutes = () => {
   if (!user) return <Navigate to="/auth" replace />;
 
   return (
-    <CurrencyProvider>
-      <AppLayout>
-        <Routes>
+    <OrganizationProvider>
+      <CurrencyProvider>
+        <OrgGate />
+      </CurrencyProvider>
+    </OrganizationProvider>
+  );
+};
+
+const OrgGate = () => {
+  const { organization, loading } = useOrganization();
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (!organization) return <OnboardingOrg />;
+
+  return (
+    <AppLayout>
+      <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/expenses" element={<Expenses />} />
         <Route path="/budgets" element={<Budgets />} />
         <Route path="/savings" element={<Savings />} />
+        <Route path="/tasks" element={<TasksPage />} />
         <Route path="/portfolio" element={<PortfolioPage />} />
         <Route path="/market" element={<MarketDataPage />} />
         <Route path="/ai-insights" element={<AIInsights />} />
@@ -53,10 +78,9 @@ const ProtectedRoutes = () => {
         <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </AppLayout>
-    </CurrencyProvider>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </AppLayout>
   );
 };
 
