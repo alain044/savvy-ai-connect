@@ -3,13 +3,14 @@ import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, Receipt, PiggyBank, Target, Sparkles,
-  Briefcase, TrendingUp, BarChart3, Bell,
-  Settings, ChevronLeft, ChevronRight, LogOut
+  Briefcase, TrendingUp, BarChart3, Bell, ListChecks,
+  Settings, ChevronLeft, ChevronRight, LogOut, Building2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import LanguageSelector from '@/components/LanguageSelector';
 import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const SignOutButton = ({ collapsed }: { collapsed: boolean }) => {
@@ -32,6 +33,7 @@ const SignOutButton = ({ collapsed }: { collapsed: boolean }) => {
 const AppLayout = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { organization, role } = useOrganization();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -56,6 +58,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
 
   const financeItems = [
     { to: '/', icon: LayoutDashboard, label: t('nav.dashboard') },
+    { to: '/tasks', icon: ListChecks, label: t('nav.tasks') },
     { to: '/expenses', icon: Receipt, label: t('nav.expenses') },
     { to: '/budgets', icon: PiggyBank, label: t('nav.budgets') },
     { to: '/savings', icon: Target, label: t('nav.savings') },
@@ -126,6 +129,19 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
+
+        {/* Org banner */}
+        {organization && !collapsed && (
+          <div className="px-4 py-3 border-b border-border bg-accent/30">
+            <div className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-primary shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate">{organization.name}</p>
+                {role && <p className="text-xs text-muted-foreground capitalize">{t(`roles.${role}`)}</p>}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto p-3 space-y-6">
