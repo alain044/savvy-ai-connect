@@ -6,9 +6,12 @@ import { cn } from '@/lib/utils';
 const languages = [
   { code: 'en', label: 'English', flag: '🇬🇧' },
   { code: 'fr', label: 'Français', flag: '🇫🇷' },
-  { code: 'rw', label: 'Kinyarwanda', flag: '🇷🇼' },
+  { code: 'es', label: 'Español', flag: '🇪🇸' },
+  { code: 'pt', label: 'Português', flag: '🇵🇹' },
+  { code: 'ar', label: 'العربية', flag: '🇸🇦' },
   { code: 'zh', label: '中文', flag: '🇨🇳' },
   { code: 'sw', label: 'Kiswahili', flag: '🇹🇿' },
+  { code: 'rw', label: 'Kinyarwanda', flag: '🇷🇼' },
 ];
 
 const LanguageSelector = ({ collapsed = false }: { collapsed?: boolean }) => {
