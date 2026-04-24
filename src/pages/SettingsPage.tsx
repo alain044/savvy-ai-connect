@@ -362,6 +362,39 @@ const SettingsPage = () => {
               <CardDescription>{t('settings.notificationDesc')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {pushPermission === 'unsupported' && (
+                <Alert>
+                  <AlertTitle>{t('settings.pushUnsupportedTitle')}</AlertTitle>
+                  <AlertDescription>{t('settings.pushUnsupportedDesc')}</AlertDescription>
+                </Alert>
+              )}
+              {pushPermission === 'denied' && (
+                <Alert variant="destructive">
+                  <AlertTitle>{t('settings.pushBlockedTitle')}</AlertTitle>
+                  <AlertDescription>{t('settings.pushBlockedDesc')}</AlertDescription>
+                </Alert>
+              )}
+              {pushPermission === 'default' && notifications.pushNotifications && (
+                <Alert>
+                  <AlertTitle>{t('settings.pushPermissionTitle')}</AlertTitle>
+                  <AlertDescription className="flex items-center justify-between gap-4 flex-wrap">
+                    <span>{t('settings.pushPermissionDesc')}</span>
+                    <Button size="sm" variant="outline" onClick={handleEnablePush}>
+                      <BellRing className="w-4 h-4 mr-2" />{t('settings.enablePush')}
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+              {pushPermission === 'granted' && (
+                <div className="flex items-center gap-2 text-sm text-emerald-600">
+                  <BellRing className="w-4 h-4" />
+                  <span>{t('settings.pushReady')}</span>
+                  <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                    {t('settings.active')}
+                  </Badge>
+                </div>
+              )}
+
               {[
                 { key: 'emailAlerts' as const, label: t('settings.emailAlerts'), desc: t('settings.emailAlertsDesc') },
                 { key: 'pushNotifications' as const, label: t('settings.pushNotifications'), desc: t('settings.pushNotificationsDesc') },
@@ -370,7 +403,7 @@ const SettingsPage = () => {
                 { key: 'marketAlerts' as const, label: t('settings.marketAlerts'), desc: t('settings.marketAlertsDesc') },
                 { key: 'goalReminders' as const, label: t('settings.goalReminders'), desc: t('settings.goalRemindersDesc') },
               ].map(({ key, label, desc }) => (
-                <div key={key} className="flex items-center justify-between py-2">
+                <div key={key} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                   <div>
                     <p className="text-sm font-medium text-foreground">{label}</p>
                     <p className="text-xs text-muted-foreground">{desc}</p>
@@ -378,10 +411,16 @@ const SettingsPage = () => {
                   <Switch checked={notifications[key]} onCheckedChange={(v) => setNotifications({ ...notifications, [key]: v })} />
                 </div>
               ))}
-              <Button onClick={handleSaveNotifications} disabled={saving} className="flex items-center gap-2">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                {t('settings.save')}
-              </Button>
+              <div className="flex flex-wrap items-center gap-2 pt-2">
+                <Button onClick={handleSaveNotifications} disabled={saving} className="flex items-center gap-2">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  {t('settings.save')}
+                </Button>
+                <Button variant="outline" onClick={handleSendTest} disabled={testingNotif} className="flex items-center gap-2">
+                  {testingNotif ? <Loader2 className="w-4 h-4 animate-spin" /> : <BellRing className="w-4 h-4" />}
+                  {t('settings.sendTest')}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -392,21 +431,29 @@ const SettingsPage = () => {
               <CardTitle>{t('settings.securitySettings')}</CardTitle>
               <CardDescription>{t('settings.securityDesc')}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword">{t('settings.newPassword')}</Label>
-                  <Input id="newPassword" type="password" placeholder="••••••••" />
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-3">{t('settings.passwordSection')}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">{t('settings.newPassword')}</Label>
+                    <Input id="newPassword" type="password" placeholder="••••••••" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">{t('settings.confirmPassword')}</Label>
+                    <Input id="confirmPassword" type="password" placeholder="••••••••" />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">{t('settings.confirmPassword')}</Label>
-                  <Input id="confirmPassword" type="password" placeholder="••••••••" />
-                </div>
+                <Button onClick={handleChangePassword} disabled={saving} className="mt-4 flex items-center gap-2">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  {t('settings.updatePassword')}
+                </Button>
               </div>
-              <Button onClick={handleChangePassword} disabled={saving} className="flex items-center gap-2">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                {t('settings.updatePassword')}
-              </Button>
+
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-3">{t('settings.twoFactor.section')}</h3>
+                <TwoFactorAuth />
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
