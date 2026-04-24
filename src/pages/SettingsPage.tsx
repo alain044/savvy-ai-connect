@@ -13,6 +13,17 @@ import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrency, CURRENCIES, CurrencyCode } from '@/contexts/CurrencyContext';
+import { SettingsSkeleton } from '@/components/settings/SettingsSkeleton';
+import { OrganizationCard } from '@/components/settings/OrganizationCard';
+import { ActivityLog } from '@/components/settings/ActivityLog';
+
+const diffObject = <T extends Record<string, any>>(prev: T, next: T): Partial<T> => {
+  const out: Record<string, any> = {};
+  for (const k of Object.keys(next)) {
+    if (JSON.stringify(prev[k]) !== JSON.stringify(next[k])) out[k] = next[k];
+  }
+  return out as Partial<T>;
+};
 
 const SettingsPage = () => {
   const { t } = useTranslation();
