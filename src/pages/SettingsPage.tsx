@@ -34,9 +34,14 @@ const SettingsPage = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { setCurrency: setGlobalCurrency } = useCurrency();
+  const { refresh: refreshPrefs } = usePreferences();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [auditRefresh, setAuditRefresh] = useState(0);
+  const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported'>(
+    typeof Notification !== 'undefined' ? Notification.permission : 'unsupported',
+  );
+  const [testingNotif, setTestingNotif] = useState(false);
 
   const [profile, setProfile] = useState({
     fullName: '',
