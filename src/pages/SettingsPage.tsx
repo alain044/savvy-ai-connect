@@ -369,6 +369,8 @@ const SettingsPage = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <ActivityLog refreshKey={auditRefresh} />
     </div>
   );
 };
