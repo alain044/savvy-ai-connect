@@ -98,13 +98,22 @@ const SettingsPage = () => {
       if (settingsRes.data) {
         const notifs = settingsRes.data.notifications as any;
         const prefs = settingsRes.data.preferences as any;
-        if (notifs) setNotifications((n) => ({ ...n, ...notifs }));
-        if (prefs) setPreferences((p) => ({ ...p, ...prefs }));
+        if (notifs) {
+          const merged = { ...notifications, ...notifs };
+          setNotifications(merged);
+          setInitialNotifications(merged);
+        }
+        if (prefs) {
+          const merged = { ...preferences, ...prefs };
+          setPreferences(merged);
+          setInitialPreferences(merged);
+        }
       }
 
       setLoading(false);
     };
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleSaveProfile = async () => {
@@ -120,6 +129,9 @@ const SettingsPage = () => {
     }, { onConflict: 'user_id' });
     setSaving(false);
     if (error) { console.error(error); toast.error(t('settings.saveFailed')); return; }
+    const changes = diffObject(initialProfile, profile);
+    await logAudit('profile', changes);
+    setInitialProfile(profile);
     await setGlobalCurrency(profile.currency as CurrencyCode);
     toast.success(t('settings.saved'));
   };
@@ -134,6 +146,9 @@ const SettingsPage = () => {
     }, { onConflict: 'user_id' });
     setSaving(false);
     if (error) { console.error(error); toast.error(t('settings.saveFailed')); return; }
+    const changes = diffObject(initialNotifications, notifications);
+    await logAudit('notifications', changes);
+    setInitialNotifications(notifications);
     toast.success(t('settings.notificationsSaved'));
   };
 
@@ -147,6 +162,9 @@ const SettingsPage = () => {
     }, { onConflict: 'user_id' });
     setSaving(false);
     if (error) { console.error(error); toast.error(t('settings.saveFailed')); return; }
+    const changes = diffObject(initialPreferences, preferences);
+    await logAudit('preferences', changes);
+    setInitialPreferences(preferences);
     toast.success(t('settings.preferencesSaved'));
   };
 
@@ -159,15 +177,12 @@ const SettingsPage = () => {
     const { error } = await supabase.auth.updateUser({ password: newPw });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
+    await logAudit('security', { password: 'updated' });
     toast.success(t('settings.passwordUpdated'));
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <SettingsSkeleton />;
   }
 
   return (
