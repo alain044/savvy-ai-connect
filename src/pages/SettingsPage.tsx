@@ -192,6 +192,8 @@ const SettingsPage = () => {
         <p className="text-muted-foreground">{t('settings.subtitle')}</p>
       </div>
 
+      <OrganizationCard />
+
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="profile" className="flex items-center gap-2">
