@@ -159,6 +159,12 @@ const SettingsPage = () => {
     const changes = diffObject(initialNotifications, notifications);
     await logAudit('notifications', changes);
     setInitialNotifications(notifications);
+    await refreshPrefs();
+    // If user enabled push, request browser permission
+    if (notifications.pushNotifications && pushPermission === 'default') {
+      const result = await requestPushPermission();
+      setPushPermission(result);
+    }
     toast.success(t('settings.notificationsSaved'));
   };
 
@@ -175,7 +181,33 @@ const SettingsPage = () => {
     const changes = diffObject(initialPreferences, preferences);
     await logAudit('preferences', changes);
     setInitialPreferences(preferences);
+    await refreshPrefs();
     toast.success(t('settings.preferencesSaved'));
+  };
+
+  const handleEnablePush = async () => {
+    const result = await requestPushPermission();
+    setPushPermission(result);
+    if (result === 'granted') toast.success(t('settings.pushEnabled'));
+    else if (result === 'denied') toast.error(t('settings.pushDenied'));
+  };
+
+  const handleSendTest = async () => {
+    if (!user) return;
+    setTestingNotif(true);
+    await sendNotification({
+      userId: user.id,
+      title: t('settings.testNotifTitle'),
+      message: t('settings.testNotifMessage'),
+      type: 'info',
+      prefs: notifications,
+    });
+    // Browser push for "info" requires pushNotifications + permission, even if no category gates it
+    if (notifications.pushNotifications && pushPermission === 'granted') {
+      try { new Notification(t('settings.testNotifTitle'), { body: t('settings.testNotifMessage') }); } catch { /* noop */ }
+    }
+    setTestingNotif(false);
+    toast.success(t('settings.testNotifSent'));
   };
 
   const handleChangePassword = async () => {
