@@ -26,12 +26,23 @@ const OnboardingOrg = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user) {
+      toast.error('You must be signed in to create an organization.');
+      return;
+    }
     setLoading(true);
     try {
+      // Ensure we have a fresh, valid session attached to the request
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      const activeUserId = sessionData.session?.user?.id;
+      if (!activeUserId) {
+        throw new Error('Your session has expired. Please sign in again.');
+      }
+
       const { error } = await supabase
         .from('organizations')
-        .insert({ name, type, description, created_by: user.id })
+        .insert({ name, type, description, created_by: activeUserId })
         .select()
         .single();
       if (error) throw error;
@@ -39,7 +50,8 @@ const OnboardingOrg = () => {
       await refresh();
       navigate('/');
     } catch (err: any) {
-      toast.error(err.message);
+      console.error('Create organization error:', err);
+      toast.error(err.message ?? 'Failed to create organization');
     } finally {
       setLoading(false);
     }
