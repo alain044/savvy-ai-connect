@@ -48,26 +48,29 @@ const SettingsPage = () => {
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
+      setLoading(true);
       const [profileRes, settingsRes] = await Promise.all([
-        supabase.from('profiles').select('*').eq('user_id', user.id).single(),
-        supabase.from('user_settings').select('*').eq('user_id', user.id).single(),
+        supabase.from('profiles').select('*').eq('user_id', user.id).maybeSingle(),
+        supabase.from('user_settings').select('*').eq('user_id', user.id).maybeSingle(),
       ]);
 
       if (profileRes.data) {
         setProfile({
           fullName: profileRes.data.full_name || '',
-          email: profileRes.data.email || '',
+          email: profileRes.data.email || user.email || '',
           phone: profileRes.data.phone || '',
           bio: profileRes.data.bio || '',
           currency: profileRes.data.currency || 'USD',
         });
+      } else {
+        setProfile((p) => ({ ...p, email: user.email || '' }));
       }
 
       if (settingsRes.data) {
         const notifs = settingsRes.data.notifications as any;
         const prefs = settingsRes.data.preferences as any;
-        if (notifs) setNotifications(notifs);
-        if (prefs) setPreferences(prefs);
+        if (notifs) setNotifications((n) => ({ ...n, ...notifs }));
+        if (prefs) setPreferences((p) => ({ ...p, ...prefs }));
       }
 
       setLoading(false);
@@ -78,15 +81,16 @@ const SettingsPage = () => {
   const handleSaveProfile = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase.from('profiles').update({
+    const { error } = await supabase.from('profiles').upsert({
+      user_id: user.id,
       full_name: profile.fullName,
       email: profile.email,
       phone: profile.phone,
       bio: profile.bio,
       currency: profile.currency,
-    }).eq('user_id', user.id);
+    }, { onConflict: 'user_id' });
     setSaving(false);
-    if (error) { toast.error(t('settings.saveFailed')); return; }
+    if (error) { console.error(error); toast.error(t('settings.saveFailed')); return; }
     await setGlobalCurrency(profile.currency as CurrencyCode);
     toast.success(t('settings.saved'));
   };
@@ -94,22 +98,26 @@ const SettingsPage = () => {
   const handleSaveNotifications = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase.from('user_settings').update({
+    const { error } = await supabase.from('user_settings').upsert({
+      user_id: user.id,
       notifications: notifications as any,
-    }).eq('user_id', user.id);
+      preferences: preferences as any,
+    }, { onConflict: 'user_id' });
     setSaving(false);
-    if (error) { toast.error(t('settings.saveFailed')); return; }
+    if (error) { console.error(error); toast.error(t('settings.saveFailed')); return; }
     toast.success(t('settings.notificationsSaved'));
   };
 
   const handleSavePreferences = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase.from('user_settings').update({
+    const { error } = await supabase.from('user_settings').upsert({
+      user_id: user.id,
+      notifications: notifications as any,
       preferences: preferences as any,
-    }).eq('user_id', user.id);
+    }, { onConflict: 'user_id' });
     setSaving(false);
-    if (error) { toast.error(t('settings.saveFailed')); return; }
+    if (error) { console.error(error); toast.error(t('settings.saveFailed')); return; }
     toast.success(t('settings.preferencesSaved'));
   };
 
