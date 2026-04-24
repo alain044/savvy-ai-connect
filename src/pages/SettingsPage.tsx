@@ -31,6 +31,7 @@ const SettingsPage = () => {
   const { setCurrency: setGlobalCurrency } = useCurrency();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [auditRefresh, setAuditRefresh] = useState(0);
 
   const [profile, setProfile] = useState({
     fullName: '',
@@ -39,6 +40,7 @@ const SettingsPage = () => {
     bio: '',
     currency: 'USD',
   });
+  const [initialProfile, setInitialProfile] = useState(profile);
 
   const [notifications, setNotifications] = useState({
     emailAlerts: true,
@@ -48,6 +50,7 @@ const SettingsPage = () => {
     marketAlerts: true,
     goalReminders: true,
   });
+  const [initialNotifications, setInitialNotifications] = useState(notifications);
 
   const [preferences, setPreferences] = useState({
     dateFormat: 'MM/DD/YYYY',
@@ -55,6 +58,17 @@ const SettingsPage = () => {
     compactView: false,
     showBalances: true,
   });
+  const [initialPreferences, setInitialPreferences] = useState(preferences);
+
+  const logAudit = async (section: string, changes: Record<string, unknown>) => {
+    if (!user || Object.keys(changes).length === 0) return;
+    await supabase.from('settings_audit_log').insert({
+      user_id: user.id,
+      section,
+      changes: changes as any,
+    });
+    setAuditRefresh((n) => n + 1);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -66,15 +80,19 @@ const SettingsPage = () => {
       ]);
 
       if (profileRes.data) {
-        setProfile({
+        const next = {
           fullName: profileRes.data.full_name || '',
           email: profileRes.data.email || user.email || '',
           phone: profileRes.data.phone || '',
           bio: profileRes.data.bio || '',
           currency: profileRes.data.currency || 'USD',
-        });
+        };
+        setProfile(next);
+        setInitialProfile(next);
       } else {
-        setProfile((p) => ({ ...p, email: user.email || '' }));
+        const next = { ...profile, email: user.email || '' };
+        setProfile(next);
+        setInitialProfile(next);
       }
 
       if (settingsRes.data) {
