@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { User, Bell, Palette, Shield, Save, Loader2 } from 'lucide-react';
+import { User, Bell, Palette, Shield, Save, Loader2, BellRing } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,13 +9,18 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrency, CURRENCIES, CurrencyCode } from '@/contexts/CurrencyContext';
+import { usePreferences } from '@/contexts/PreferencesContext';
 import { SettingsSkeleton } from '@/components/settings/SettingsSkeleton';
 import { OrganizationCard } from '@/components/settings/OrganizationCard';
 import { ActivityLog } from '@/components/settings/ActivityLog';
+import { TwoFactorAuth } from '@/components/settings/TwoFactorAuth';
+import { requestPushPermission, sendNotification } from '@/lib/notify';
 
 const diffObject = <T extends Record<string, any>>(prev: T, next: T): Partial<T> => {
   const out: Record<string, any> = {};
