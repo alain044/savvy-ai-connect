@@ -248,6 +248,30 @@ export type Database = {
         }
         Relationships: []
       }
+      settings_audit_log: {
+        Row: {
+          changes: Json
+          created_at: string
+          id: string
+          section: string
+          user_id: string
+        }
+        Insert: {
+          changes?: Json
+          created_at?: string
+          id?: string
+          section: string
+          user_id: string
+        }
+        Update: {
+          changes?: Json
+          created_at?: string
+          id?: string
+          section?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           amount: number | null

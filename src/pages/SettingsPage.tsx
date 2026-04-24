@@ -13,6 +13,17 @@ import { toast } from '@/components/ui/sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrency, CURRENCIES, CurrencyCode } from '@/contexts/CurrencyContext';
+import { SettingsSkeleton } from '@/components/settings/SettingsSkeleton';
+import { OrganizationCard } from '@/components/settings/OrganizationCard';
+import { ActivityLog } from '@/components/settings/ActivityLog';
+
+const diffObject = <T extends Record<string, any>>(prev: T, next: T): Partial<T> => {
+  const out: Record<string, any> = {};
+  for (const k of Object.keys(next)) {
+    if (JSON.stringify(prev[k]) !== JSON.stringify(next[k])) out[k] = next[k];
+  }
+  return out as Partial<T>;
+};
 
 const SettingsPage = () => {
   const { t } = useTranslation();
@@ -20,6 +31,7 @@ const SettingsPage = () => {
   const { setCurrency: setGlobalCurrency } = useCurrency();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [auditRefresh, setAuditRefresh] = useState(0);
 
   const [profile, setProfile] = useState({
     fullName: '',
@@ -28,6 +40,7 @@ const SettingsPage = () => {
     bio: '',
     currency: 'USD',
   });
+  const [initialProfile, setInitialProfile] = useState(profile);
 
   const [notifications, setNotifications] = useState({
     emailAlerts: true,
@@ -37,6 +50,7 @@ const SettingsPage = () => {
     marketAlerts: true,
     goalReminders: true,
   });
+  const [initialNotifications, setInitialNotifications] = useState(notifications);
 
   const [preferences, setPreferences] = useState({
     dateFormat: 'MM/DD/YYYY',
@@ -44,6 +58,17 @@ const SettingsPage = () => {
     compactView: false,
     showBalances: true,
   });
+  const [initialPreferences, setInitialPreferences] = useState(preferences);
+
+  const logAudit = async (section: string, changes: Record<string, unknown>) => {
+    if (!user || Object.keys(changes).length === 0) return;
+    await supabase.from('settings_audit_log').insert({
+      user_id: user.id,
+      section,
+      changes: changes as any,
+    });
+    setAuditRefresh((n) => n + 1);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -55,27 +80,40 @@ const SettingsPage = () => {
       ]);
 
       if (profileRes.data) {
-        setProfile({
+        const next = {
           fullName: profileRes.data.full_name || '',
           email: profileRes.data.email || user.email || '',
           phone: profileRes.data.phone || '',
           bio: profileRes.data.bio || '',
           currency: profileRes.data.currency || 'USD',
-        });
+        };
+        setProfile(next);
+        setInitialProfile(next);
       } else {
-        setProfile((p) => ({ ...p, email: user.email || '' }));
+        const next = { ...profile, email: user.email || '' };
+        setProfile(next);
+        setInitialProfile(next);
       }
 
       if (settingsRes.data) {
         const notifs = settingsRes.data.notifications as any;
         const prefs = settingsRes.data.preferences as any;
-        if (notifs) setNotifications((n) => ({ ...n, ...notifs }));
-        if (prefs) setPreferences((p) => ({ ...p, ...prefs }));
+        if (notifs) {
+          const merged = { ...notifications, ...notifs };
+          setNotifications(merged);
+          setInitialNotifications(merged);
+        }
+        if (prefs) {
+          const merged = { ...preferences, ...prefs };
+          setPreferences(merged);
+          setInitialPreferences(merged);
+        }
       }
 
       setLoading(false);
     };
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleSaveProfile = async () => {
@@ -91,6 +129,9 @@ const SettingsPage = () => {
     }, { onConflict: 'user_id' });
     setSaving(false);
     if (error) { console.error(error); toast.error(t('settings.saveFailed')); return; }
+    const changes = diffObject(initialProfile, profile);
+    await logAudit('profile', changes);
+    setInitialProfile(profile);
     await setGlobalCurrency(profile.currency as CurrencyCode);
     toast.success(t('settings.saved'));
   };
@@ -105,6 +146,9 @@ const SettingsPage = () => {
     }, { onConflict: 'user_id' });
     setSaving(false);
     if (error) { console.error(error); toast.error(t('settings.saveFailed')); return; }
+    const changes = diffObject(initialNotifications, notifications);
+    await logAudit('notifications', changes);
+    setInitialNotifications(notifications);
     toast.success(t('settings.notificationsSaved'));
   };
 
@@ -118,6 +162,9 @@ const SettingsPage = () => {
     }, { onConflict: 'user_id' });
     setSaving(false);
     if (error) { console.error(error); toast.error(t('settings.saveFailed')); return; }
+    const changes = diffObject(initialPreferences, preferences);
+    await logAudit('preferences', changes);
+    setInitialPreferences(preferences);
     toast.success(t('settings.preferencesSaved'));
   };
 
@@ -130,15 +177,12 @@ const SettingsPage = () => {
     const { error } = await supabase.auth.updateUser({ password: newPw });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
+    await logAudit('security', { password: 'updated' });
     toast.success(t('settings.passwordUpdated'));
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <SettingsSkeleton />;
   }
 
   return (
@@ -147,6 +191,8 @@ const SettingsPage = () => {
         <h1 className="text-2xl font-bold text-foreground">{t('settings.title')}</h1>
         <p className="text-muted-foreground">{t('settings.subtitle')}</p>
       </div>
+
+      <OrganizationCard />
 
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
@@ -323,6 +369,8 @@ const SettingsPage = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <ActivityLog refreshKey={auditRefresh} />
     </div>
   );
 };
