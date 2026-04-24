@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { OrganizationProvider, useOrganization } from "@/contexts/OrganizationContext";
+import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import AppLayout from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
 import OnboardingOrg from "./pages/OnboardingOrg";
@@ -42,7 +43,9 @@ const ProtectedRoutes = () => {
   return (
     <OrganizationProvider>
       <CurrencyProvider>
-        <OrgGate />
+        <PreferencesProvider>
+          <OrgGate />
+        </PreferencesProvider>
       </CurrencyProvider>
     </OrganizationProvider>
   );
