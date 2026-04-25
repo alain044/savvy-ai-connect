@@ -468,13 +468,26 @@ const SettingsPage = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="newPassword">{t('settings.newPassword')}</Label>
-                    <Input id="newPassword" type="password" placeholder="••••••••" />
+                    <div className="relative">
+                      <Input id="newPassword" type={showNewPassword ? 'text' : 'password'} placeholder="••••••••" className="pr-10" />
+                      <button type="button" onClick={() => setShowNewPassword(v => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label={showNewPassword ? 'Hide password' : 'Show password'}>
+                        {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="confirmPassword">{t('settings.confirmPassword')}</Label>
-                    <Input id="confirmPassword" type="password" placeholder="••••••••" />
+                    <div className="relative">
+                      <Input id="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} placeholder="••••••••" className="pr-10" />
+                      <button type="button" onClick={() => setShowConfirmPassword(v => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
+                {twoFactorEnabled && (
+                  <p className="text-xs text-muted-foreground mt-2">You'll be asked for a 2FA code before the password is changed.</p>
+                )}
                 <Button onClick={handleChangePassword} disabled={saving} className="mt-4 flex items-center gap-2">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   {t('settings.updatePassword')}
@@ -483,14 +496,28 @@ const SettingsPage = () => {
 
               <div>
                 <h3 className="text-sm font-semibold text-foreground mb-3">{t('settings.twoFactor.section')}</h3>
-                <TwoFactorAuth />
+                <TwoFactorAuth onStatusChange={setTwoFactorEnabled} />
+              </div>
+
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-3">Recovery codes</h3>
+                <RecoveryCodes twoFactorEnabled={twoFactorEnabled} />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
+      <MembershipRequests />
       <ActivityLog refreshKey={auditRefresh} />
+
+      <TotpChallenge
+        open={challengeOpen}
+        onOpenChange={(o) => { setChallengeOpen(o); if (!o) setPendingPasswordChange(null); }}
+        onVerified={() => { if (pendingPasswordChange) performPasswordChange(pendingPasswordChange); }}
+        title="Confirm password change"
+        description="Enter your 2FA code to confirm this sensitive change."
+      />
     </div>
   );
 };
