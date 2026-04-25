@@ -200,35 +200,46 @@ const SettingsPage = () => {
     else if (result === 'denied') toast.error(t('settings.pushDenied'));
   };
 
-  const handleSendTest = async () => {
+  const handleSendTest = async (category: NotificationCategory, label: string) => {
     if (!user) return;
-    setTestingNotif(true);
-    await sendNotification({
+    setTestingCategory(category);
+    const result = await sendNotification({
       userId: user.id,
-      title: t('settings.testNotifTitle'),
-      message: t('settings.testNotifMessage'),
-      type: 'info',
+      title: `Test: ${label}`,
+      message: `This is a test for the "${label}" category. Channel preferences are working.`,
+      type: category,
       prefs: notifications,
     });
-    // Browser push for "info" requires pushNotifications + permission, even if no category gates it
-    if (notifications.pushNotifications && pushPermission === 'granted') {
-      try { new Notification(t('settings.testNotifTitle'), { body: t('settings.testNotifMessage') }); } catch { /* noop */ }
-    }
-    setTestingNotif(false);
-    toast.success(t('settings.testNotifSent'));
+    setTestingCategory(null);
+    if (result.delivered) toast.success(`${label} test sent.`);
+    else toast.error(`${label} is disabled. Enable it above to receive this notification.`);
   };
 
-  const handleChangePassword = async () => {
-    const newPw = (document.getElementById('newPassword') as HTMLInputElement)?.value;
-    const confirmPw = (document.getElementById('confirmPassword') as HTMLInputElement)?.value;
-    if (!newPw || newPw.length < 6) { toast.error(t('settings.passwordTooShort')); return; }
-    if (newPw !== confirmPw) { toast.error(t('settings.passwordMismatch')); return; }
+  const performPasswordChange = async (newPw: string) => {
     setSaving(true);
     const { error } = await supabase.auth.updateUser({ password: newPw });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     await logAudit('security', { password: 'updated' });
+    (document.getElementById('newPassword') as HTMLInputElement).value = '';
+    (document.getElementById('confirmPassword') as HTMLInputElement).value = '';
+    setPendingPasswordChange(null);
     toast.success(t('settings.passwordUpdated'));
+  };
+
+  const handleChangePassword = async () => {
+    const newPw = (document.getElementById('newPassword') as HTMLInputElement)?.value;
+    const confirmPw = (document.getElementById('confirmPassword') as HTMLInputElement)?.value;
+    if (!newPw || newPw.length < 8) { toast.error('Password must be at least 8 characters'); return; }
+    if (newPw !== confirmPw) { toast.error(t('settings.passwordMismatch')); return; }
+
+    if (twoFactorEnabled) {
+      // Gate behind a TOTP challenge
+      setPendingPasswordChange(newPw);
+      setChallengeOpen(true);
+      return;
+    }
+    await performPasswordChange(newPw);
   };
 
   if (loading) {
