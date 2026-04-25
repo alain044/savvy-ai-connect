@@ -414,30 +414,42 @@ const SettingsPage = () => {
                 </div>
               )}
 
-              {[
-                { key: 'emailAlerts' as const, label: t('settings.emailAlerts'), desc: t('settings.emailAlertsDesc') },
-                { key: 'pushNotifications' as const, label: t('settings.pushNotifications'), desc: t('settings.pushNotificationsDesc') },
-                { key: 'budgetWarnings' as const, label: t('settings.budgetWarnings'), desc: t('settings.budgetWarningsDesc') },
-                { key: 'weeklyReport' as const, label: t('settings.weeklyReport'), desc: t('settings.weeklyReportDesc') },
-                { key: 'marketAlerts' as const, label: t('settings.marketAlerts'), desc: t('settings.marketAlertsDesc') },
-                { key: 'goalReminders' as const, label: t('settings.goalReminders'), desc: t('settings.goalRemindersDesc') },
-              ].map(({ key, label, desc }) => (
-                <div key={key} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                  <div>
+              {([
+                { key: 'emailAlerts', label: t('settings.emailAlerts'), desc: t('settings.emailAlertsDesc'), test: null },
+                { key: 'pushNotifications', label: t('settings.pushNotifications'), desc: t('settings.pushNotificationsDesc'), test: 'info' as NotificationCategory },
+                { key: 'budgetWarnings', label: t('settings.budgetWarnings'), desc: t('settings.budgetWarningsDesc'), test: 'budget' as NotificationCategory },
+                { key: 'weeklyReport', label: t('settings.weeklyReport'), desc: t('settings.weeklyReportDesc'), test: null },
+                { key: 'marketAlerts', label: t('settings.marketAlerts'), desc: t('settings.marketAlertsDesc'), test: 'price_alert' as NotificationCategory },
+                { key: 'goalReminders', label: t('settings.goalReminders'), desc: t('settings.goalRemindersDesc'), test: 'goal' as NotificationCategory },
+              ] as const).map(({ key, label, desc, test }) => (
+                <div key={key} className="flex items-center justify-between gap-2 py-2 border-b border-border last:border-0">
+                  <div className="min-w-0">
                     <p className="text-sm font-medium text-foreground">{label}</p>
                     <p className="text-xs text-muted-foreground">{desc}</p>
                   </div>
-                  <Switch checked={notifications[key]} onCheckedChange={(v) => setNotifications({ ...notifications, [key]: v })} />
+                  <div className="flex items-center gap-2 shrink-0">
+                    {test && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleSendTest(test, label)}
+                        disabled={testingCategory === test}
+                        title={`Send test ${label} notification`}
+                      >
+                        {testingCategory === test ? <Loader2 className="w-4 h-4 animate-spin" /> : <BellRing className="w-4 h-4" />}
+                      </Button>
+                    )}
+                    <Switch
+                      checked={notifications[key as keyof typeof notifications]}
+                      onCheckedChange={(v) => setNotifications({ ...notifications, [key]: v })}
+                    />
+                  </div>
                 </div>
               ))}
               <div className="flex flex-wrap items-center gap-2 pt-2">
                 <Button onClick={handleSaveNotifications} disabled={saving} className="flex items-center gap-2">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   {t('settings.save')}
-                </Button>
-                <Button variant="outline" onClick={handleSendTest} disabled={testingNotif} className="flex items-center gap-2">
-                  {testingNotif ? <Loader2 className="w-4 h-4 animate-spin" /> : <BellRing className="w-4 h-4" />}
-                  {t('settings.sendTest')}
                 </Button>
               </div>
             </CardContent>
