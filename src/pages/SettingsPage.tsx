@@ -134,6 +134,11 @@ const SettingsPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  // Live-detect browser notification permission changes (no manual refresh needed)
+  useEffect(() => {
+    return watchNotificationPermission(setPushPermission);
+  }, []);
+
   const handleSaveProfile = async () => {
     if (!user) return;
     setSaving(true);
