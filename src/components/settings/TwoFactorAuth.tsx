@@ -15,7 +15,11 @@ interface Factor {
   friendly_name?: string;
 }
 
-export const TwoFactorAuth = () => {
+interface Props {
+  onStatusChange?: (enabled: boolean) => void;
+}
+
+export const TwoFactorAuth = ({ onStatusChange }: Props = {}) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -33,12 +37,15 @@ export const TwoFactorAuth = () => {
       return;
     }
     const verified = data.totp.find((f) => f.status === 'verified');
-    setFactor(verified ? { id: verified.id, status: verified.status, friendly_name: verified.friendly_name } : null);
+    const next = verified ? { id: verified.id, status: verified.status, friendly_name: verified.friendly_name } : null;
+    setFactor(next);
+    onStatusChange?.(!!next);
     setLoading(false);
   };
 
   useEffect(() => {
     refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const startEnrollment = async () => {

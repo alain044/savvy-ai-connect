@@ -64,6 +64,74 @@ export type Database = {
           },
         ]
       }
+      membership_requests: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          organization_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          organization_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          organization_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mfa_recovery_codes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          id: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -138,6 +206,7 @@ export type Database = {
           created_by: string
           description: string | null
           id: string
+          join_code: string | null
           name: string
           type: string
           updated_at: string
@@ -147,6 +216,7 @@ export type Database = {
           created_by: string
           description?: string | null
           id?: string
+          join_code?: string | null
           name: string
           type?: string
           updated_at?: string
@@ -156,6 +226,7 @@ export type Database = {
           created_by?: string
           description?: string | null
           id?: string
+          join_code?: string | null
           name?: string
           type?: string
           updated_at?: string
@@ -404,6 +475,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      find_org_by_code: {
+        Args: { _code: string }
+        Returns: {
+          id: string
+          name: string
+          type: string
+        }[]
+      }
+      generate_join_code: { Args: never; Returns: string }
       get_user_org: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {

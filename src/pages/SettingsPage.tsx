@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { User, Bell, Palette, Shield, Save, Loader2, BellRing } from 'lucide-react';
+import { User, Bell, Palette, Shield, Save, Loader2, BellRing, Eye, EyeOff } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,7 +20,10 @@ import { SettingsSkeleton } from '@/components/settings/SettingsSkeleton';
 import { OrganizationCard } from '@/components/settings/OrganizationCard';
 import { ActivityLog } from '@/components/settings/ActivityLog';
 import { TwoFactorAuth } from '@/components/settings/TwoFactorAuth';
-import { requestPushPermission, sendNotification } from '@/lib/notify';
+import { RecoveryCodes } from '@/components/settings/RecoveryCodes';
+import { TotpChallenge } from '@/components/settings/TotpChallenge';
+import { MembershipRequests } from '@/components/settings/MembershipRequests';
+import { requestPushPermission, sendNotification, watchNotificationPermission, NotificationCategory } from '@/lib/notify';
 
 const diffObject = <T extends Record<string, any>>(prev: T, next: T): Partial<T> => {
   const out: Record<string, any> = {};
@@ -41,7 +44,12 @@ const SettingsPage = () => {
   const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported'>(
     typeof Notification !== 'undefined' ? Notification.permission : 'unsupported',
   );
-  const [testingNotif, setTestingNotif] = useState(false);
+  const [testingCategory, setTestingCategory] = useState<string | null>(null);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [pendingPasswordChange, setPendingPasswordChange] = useState<string | null>(null);
+  const [challengeOpen, setChallengeOpen] = useState(false);
 
   const [profile, setProfile] = useState({
     fullName: '',
@@ -126,6 +134,11 @@ const SettingsPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  // Live-detect browser notification permission changes (no manual refresh needed)
+  useEffect(() => {
+    return watchNotificationPermission(setPushPermission);
+  }, []);
+
   const handleSaveProfile = async () => {
     if (!user) return;
     setSaving(true);
@@ -192,35 +205,46 @@ const SettingsPage = () => {
     else if (result === 'denied') toast.error(t('settings.pushDenied'));
   };
 
-  const handleSendTest = async () => {
+  const handleSendTest = async (category: NotificationCategory, label: string) => {
     if (!user) return;
-    setTestingNotif(true);
-    await sendNotification({
+    setTestingCategory(category);
+    const result = await sendNotification({
       userId: user.id,
-      title: t('settings.testNotifTitle'),
-      message: t('settings.testNotifMessage'),
-      type: 'info',
+      title: `Test: ${label}`,
+      message: `This is a test for the "${label}" category. Channel preferences are working.`,
+      type: category,
       prefs: notifications,
     });
-    // Browser push for "info" requires pushNotifications + permission, even if no category gates it
-    if (notifications.pushNotifications && pushPermission === 'granted') {
-      try { new Notification(t('settings.testNotifTitle'), { body: t('settings.testNotifMessage') }); } catch { /* noop */ }
-    }
-    setTestingNotif(false);
-    toast.success(t('settings.testNotifSent'));
+    setTestingCategory(null);
+    if (result.delivered) toast.success(`${label} test sent.`);
+    else toast.error(`${label} is disabled. Enable it above to receive this notification.`);
   };
 
-  const handleChangePassword = async () => {
-    const newPw = (document.getElementById('newPassword') as HTMLInputElement)?.value;
-    const confirmPw = (document.getElementById('confirmPassword') as HTMLInputElement)?.value;
-    if (!newPw || newPw.length < 6) { toast.error(t('settings.passwordTooShort')); return; }
-    if (newPw !== confirmPw) { toast.error(t('settings.passwordMismatch')); return; }
+  const performPasswordChange = async (newPw: string) => {
     setSaving(true);
     const { error } = await supabase.auth.updateUser({ password: newPw });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     await logAudit('security', { password: 'updated' });
+    (document.getElementById('newPassword') as HTMLInputElement).value = '';
+    (document.getElementById('confirmPassword') as HTMLInputElement).value = '';
+    setPendingPasswordChange(null);
     toast.success(t('settings.passwordUpdated'));
+  };
+
+  const handleChangePassword = async () => {
+    const newPw = (document.getElementById('newPassword') as HTMLInputElement)?.value;
+    const confirmPw = (document.getElementById('confirmPassword') as HTMLInputElement)?.value;
+    if (!newPw || newPw.length < 8) { toast.error('Password must be at least 8 characters'); return; }
+    if (newPw !== confirmPw) { toast.error(t('settings.passwordMismatch')); return; }
+
+    if (twoFactorEnabled) {
+      // Gate behind a TOTP challenge
+      setPendingPasswordChange(newPw);
+      setChallengeOpen(true);
+      return;
+    }
+    await performPasswordChange(newPw);
   };
 
   if (loading) {
@@ -395,30 +419,42 @@ const SettingsPage = () => {
                 </div>
               )}
 
-              {[
-                { key: 'emailAlerts' as const, label: t('settings.emailAlerts'), desc: t('settings.emailAlertsDesc') },
-                { key: 'pushNotifications' as const, label: t('settings.pushNotifications'), desc: t('settings.pushNotificationsDesc') },
-                { key: 'budgetWarnings' as const, label: t('settings.budgetWarnings'), desc: t('settings.budgetWarningsDesc') },
-                { key: 'weeklyReport' as const, label: t('settings.weeklyReport'), desc: t('settings.weeklyReportDesc') },
-                { key: 'marketAlerts' as const, label: t('settings.marketAlerts'), desc: t('settings.marketAlertsDesc') },
-                { key: 'goalReminders' as const, label: t('settings.goalReminders'), desc: t('settings.goalRemindersDesc') },
-              ].map(({ key, label, desc }) => (
-                <div key={key} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                  <div>
+              {([
+                { key: 'emailAlerts', label: t('settings.emailAlerts'), desc: t('settings.emailAlertsDesc'), test: null },
+                { key: 'pushNotifications', label: t('settings.pushNotifications'), desc: t('settings.pushNotificationsDesc'), test: 'info' as NotificationCategory },
+                { key: 'budgetWarnings', label: t('settings.budgetWarnings'), desc: t('settings.budgetWarningsDesc'), test: 'budget' as NotificationCategory },
+                { key: 'weeklyReport', label: t('settings.weeklyReport'), desc: t('settings.weeklyReportDesc'), test: null },
+                { key: 'marketAlerts', label: t('settings.marketAlerts'), desc: t('settings.marketAlertsDesc'), test: 'price_alert' as NotificationCategory },
+                { key: 'goalReminders', label: t('settings.goalReminders'), desc: t('settings.goalRemindersDesc'), test: 'goal' as NotificationCategory },
+              ] as const).map(({ key, label, desc, test }) => (
+                <div key={key} className="flex items-center justify-between gap-2 py-2 border-b border-border last:border-0">
+                  <div className="min-w-0">
                     <p className="text-sm font-medium text-foreground">{label}</p>
                     <p className="text-xs text-muted-foreground">{desc}</p>
                   </div>
-                  <Switch checked={notifications[key]} onCheckedChange={(v) => setNotifications({ ...notifications, [key]: v })} />
+                  <div className="flex items-center gap-2 shrink-0">
+                    {test && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleSendTest(test, label)}
+                        disabled={testingCategory === test}
+                        title={`Send test ${label} notification`}
+                      >
+                        {testingCategory === test ? <Loader2 className="w-4 h-4 animate-spin" /> : <BellRing className="w-4 h-4" />}
+                      </Button>
+                    )}
+                    <Switch
+                      checked={notifications[key as keyof typeof notifications]}
+                      onCheckedChange={(v) => setNotifications({ ...notifications, [key]: v })}
+                    />
+                  </div>
                 </div>
               ))}
               <div className="flex flex-wrap items-center gap-2 pt-2">
                 <Button onClick={handleSaveNotifications} disabled={saving} className="flex items-center gap-2">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   {t('settings.save')}
-                </Button>
-                <Button variant="outline" onClick={handleSendTest} disabled={testingNotif} className="flex items-center gap-2">
-                  {testingNotif ? <Loader2 className="w-4 h-4 animate-spin" /> : <BellRing className="w-4 h-4" />}
-                  {t('settings.sendTest')}
                 </Button>
               </div>
             </CardContent>
@@ -437,13 +473,26 @@ const SettingsPage = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="newPassword">{t('settings.newPassword')}</Label>
-                    <Input id="newPassword" type="password" placeholder="••••••••" />
+                    <div className="relative">
+                      <Input id="newPassword" type={showNewPassword ? 'text' : 'password'} placeholder="••••••••" className="pr-10" />
+                      <button type="button" onClick={() => setShowNewPassword(v => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label={showNewPassword ? 'Hide password' : 'Show password'}>
+                        {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="confirmPassword">{t('settings.confirmPassword')}</Label>
-                    <Input id="confirmPassword" type="password" placeholder="••••••••" />
+                    <div className="relative">
+                      <Input id="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} placeholder="••••••••" className="pr-10" />
+                      <button type="button" onClick={() => setShowConfirmPassword(v => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
+                {twoFactorEnabled && (
+                  <p className="text-xs text-muted-foreground mt-2">You'll be asked for a 2FA code before the password is changed.</p>
+                )}
                 <Button onClick={handleChangePassword} disabled={saving} className="mt-4 flex items-center gap-2">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   {t('settings.updatePassword')}
@@ -452,14 +501,28 @@ const SettingsPage = () => {
 
               <div>
                 <h3 className="text-sm font-semibold text-foreground mb-3">{t('settings.twoFactor.section')}</h3>
-                <TwoFactorAuth />
+                <TwoFactorAuth onStatusChange={setTwoFactorEnabled} />
+              </div>
+
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-3">Recovery codes</h3>
+                <RecoveryCodes twoFactorEnabled={twoFactorEnabled} />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
+      <MembershipRequests />
       <ActivityLog refreshKey={auditRefresh} />
+
+      <TotpChallenge
+        open={challengeOpen}
+        onOpenChange={(o) => { setChallengeOpen(o); if (!o) setPendingPasswordChange(null); }}
+        onVerified={() => { if (pendingPasswordChange) performPasswordChange(pendingPasswordChange); }}
+        title="Confirm password change"
+        description="Enter your 2FA code to confirm this sensitive change."
+      />
     </div>
   );
 };

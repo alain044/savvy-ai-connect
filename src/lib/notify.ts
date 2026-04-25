@@ -54,4 +54,41 @@ export const sendNotification = async ({ userId, title, message, type = 'info', 
       /* no-op */
     }
   }
+
+  return { delivered: categoryEnabled };
+};
+
+/** Subscribe to live changes to the browser Notification permission. Returns an unsubscribe fn. */
+export const watchNotificationPermission = (
+  callback: (state: NotificationPermission | 'unsupported') => void,
+): (() => void) => {
+  if (typeof window === 'undefined' || !('Notification' in window)) {
+    callback('unsupported');
+    return () => {};
+  }
+
+  callback(Notification.permission);
+
+  let cleanups: Array<() => void> = [];
+
+  // Permissions API: most reliable cross-tab signal
+  if ('permissions' in navigator) {
+    (navigator as any).permissions
+      .query({ name: 'notifications' as PermissionName })
+      .then((status: PermissionStatus) => {
+        const handler = () => callback(status.state as NotificationPermission);
+        status.addEventListener('change', handler);
+        cleanups.push(() => status.removeEventListener('change', handler));
+      })
+      .catch(() => { /* not supported */ });
+  }
+
+  // Fallback: re-check on focus / visibility change (covers OS-level toggles)
+  const recheck = () => callback(Notification.permission);
+  window.addEventListener('focus', recheck);
+  document.addEventListener('visibilitychange', recheck);
+  cleanups.push(() => window.removeEventListener('focus', recheck));
+  cleanups.push(() => document.removeEventListener('visibilitychange', recheck));
+
+  return () => cleanups.forEach((fn) => fn());
 };
