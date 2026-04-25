@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { User, Bell, Palette, Shield, Save, Loader2, BellRing } from 'lucide-react';
+import { User, Bell, Palette, Shield, Save, Loader2, BellRing, Eye, EyeOff } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,7 +20,10 @@ import { SettingsSkeleton } from '@/components/settings/SettingsSkeleton';
 import { OrganizationCard } from '@/components/settings/OrganizationCard';
 import { ActivityLog } from '@/components/settings/ActivityLog';
 import { TwoFactorAuth } from '@/components/settings/TwoFactorAuth';
-import { requestPushPermission, sendNotification } from '@/lib/notify';
+import { RecoveryCodes } from '@/components/settings/RecoveryCodes';
+import { TotpChallenge } from '@/components/settings/TotpChallenge';
+import { MembershipRequests } from '@/components/settings/MembershipRequests';
+import { requestPushPermission, sendNotification, watchNotificationPermission, NotificationCategory } from '@/lib/notify';
 
 const diffObject = <T extends Record<string, any>>(prev: T, next: T): Partial<T> => {
   const out: Record<string, any> = {};
@@ -41,7 +44,12 @@ const SettingsPage = () => {
   const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported'>(
     typeof Notification !== 'undefined' ? Notification.permission : 'unsupported',
   );
-  const [testingNotif, setTestingNotif] = useState(false);
+  const [testingCategory, setTestingCategory] = useState<string | null>(null);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [pendingPasswordChange, setPendingPasswordChange] = useState<string | null>(null);
+  const [challengeOpen, setChallengeOpen] = useState(false);
 
   const [profile, setProfile] = useState({
     fullName: '',
