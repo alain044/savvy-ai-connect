@@ -110,10 +110,15 @@ export const TwoFactorAuth = ({ onStatusChange }: Props = {}) => {
     await refresh();
   };
 
-  const disable2FA = async () => {
+  const performDisable = async () => {
     if (!factor) return;
     setBusy(true);
     const { error } = await supabase.auth.mfa.unenroll({ factorId: factor.id });
+    // Clean up any remaining recovery codes
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from('mfa_recovery_codes').delete().eq('user_id', user.id);
+    }
     setBusy(false);
     if (error) {
       toast.error(error.message);
@@ -121,6 +126,11 @@ export const TwoFactorAuth = ({ onStatusChange }: Props = {}) => {
     }
     toast.success(t('settings.twoFactor.disabled'));
     await refresh();
+  };
+
+  const disable2FA = () => {
+    if (!factor) return;
+    setDisableChallengeOpen(true);
   };
 
   const copySecret = async () => {
