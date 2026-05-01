@@ -41,19 +41,22 @@ export const TotpChallenge = ({ open, onOpenChange, onVerified, title = 'Confirm
         const hash = await hashCode(normalized);
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
-        const { data: row } = await supabase
+        // Atomically consume: only succeeds if used_at is still null
+        const { data: consumed, error: consumeErr } = await supabase
           .from('mfa_recovery_codes')
-          .select('id')
+          .update({ used_at: new Date().toISOString() })
           .eq('user_id', user.id)
           .eq('code_hash', hash)
           .is('used_at', null)
+          .select('id')
           .maybeSingle();
-        if (!row) {
+        if (consumeErr) throw consumeErr;
+        if (!consumed) {
           toast.error('Invalid or already used recovery code');
           setBusy(false);
           return;
         }
-        await supabase.from('mfa_recovery_codes').update({ used_at: new Date().toISOString() }).eq('id', row.id);
+        toast.success('Recovery code accepted');
       } else {
         const digits = value.replace(/\D/g, '');
         if (digits.length !== 6) { toast.error('Enter a 6-digit code'); setBusy(false); return; }
