@@ -340,6 +340,7 @@ const AuthPage = () => {
                 {mode === 'login' ? t('auth.signIn') : t('auth.signUp')}
               </Button>
             </form>
+            </>
           )}
 
           {(mode === 'login' || mode === 'signup') && (
