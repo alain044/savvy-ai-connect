@@ -28,6 +28,7 @@ export const TwoFactorAuth = ({ onStatusChange }: Props = {}) => {
   const [enrollment, setEnrollment] = useState<{ id: string; qr: string; secret: string } | null>(null);
   const [code, setCode] = useState('');
   const [copied, setCopied] = useState(false);
+  const [disableChallengeOpen, setDisableChallengeOpen] = useState(false);
 
   const refresh = async () => {
     setLoading(true);
