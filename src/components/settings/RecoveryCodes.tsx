@@ -116,15 +116,45 @@ export const RecoveryCodes = ({ twoFactorEnabled }: Props) => {
 
       {freshCodes && (
         <Alert>
-          <AlertTitle>Save these codes now</AlertTitle>
+          <AlertTitle>Save these codes now — they won't be shown again</AlertTitle>
           <AlertDescription>
-            <p className="text-xs mb-2">They will not be shown again. Keep them somewhere safe.</p>
-            <div className="grid grid-cols-2 gap-2 font-mono text-sm bg-muted/50 rounded p-3">
-              {freshCodes.map((c) => <div key={c}>{c}</div>)}
+            <p className="text-xs mb-2">Each code works once. Store them in a password manager or print them.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-sm bg-muted/50 rounded p-3">
+              {freshCodes.map((c, i) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(c);
+                    setCopiedIdx(i);
+                    setTimeout(() => setCopiedIdx((cur) => (cur === i ? null : cur)), 1500);
+                  }}
+                  className="flex items-center justify-between gap-2 px-2 py-1 rounded hover:bg-background/60 text-left"
+                  title="Click to copy"
+                >
+                  <span>{c}</span>
+                  {copiedIdx === i ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5 opacity-50" />}
+                </button>
+              ))}
             </div>
-            <Button size="sm" variant="outline" className="mt-3" onClick={downloadCodes}>
-              <Download className="w-4 h-4 mr-2" /> Download as .txt
-            </Button>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <Button size="sm" variant="outline" onClick={downloadCodes}>
+                <Download className="w-4 h-4 mr-2" /> Download .txt
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(freshCodes.join('\n'));
+                  setCopiedAll(true);
+                  setTimeout(() => setCopiedAll(false), 1500);
+                  toast.success('All codes copied');
+                }}
+              >
+                {copiedAll ? <Check className="w-4 h-4 mr-2 text-emerald-500" /> : <Copy className="w-4 h-4 mr-2" />}
+                Copy all
+              </Button>
+            </div>
           </AlertDescription>
         </Alert>
       )}
