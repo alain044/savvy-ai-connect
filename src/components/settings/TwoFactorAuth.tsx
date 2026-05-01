@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
+import { TotpChallenge } from '@/components/settings/TotpChallenge';
 
 interface Factor {
   id: string;
@@ -27,6 +28,7 @@ export const TwoFactorAuth = ({ onStatusChange }: Props = {}) => {
   const [enrollment, setEnrollment] = useState<{ id: string; qr: string; secret: string } | null>(null);
   const [code, setCode] = useState('');
   const [copied, setCopied] = useState(false);
+  const [disableChallengeOpen, setDisableChallengeOpen] = useState(false);
 
   const refresh = async () => {
     setLoading(true);
@@ -108,10 +110,15 @@ export const TwoFactorAuth = ({ onStatusChange }: Props = {}) => {
     await refresh();
   };
 
-  const disable2FA = async () => {
+  const performDisable = async () => {
     if (!factor) return;
     setBusy(true);
     const { error } = await supabase.auth.mfa.unenroll({ factorId: factor.id });
+    // Clean up any remaining recovery codes
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from('mfa_recovery_codes').delete().eq('user_id', user.id);
+    }
     setBusy(false);
     if (error) {
       toast.error(error.message);
@@ -119,6 +126,11 @@ export const TwoFactorAuth = ({ onStatusChange }: Props = {}) => {
     }
     toast.success(t('settings.twoFactor.disabled'));
     await refresh();
+  };
+
+  const disable2FA = () => {
+    if (!factor) return;
+    setDisableChallengeOpen(true);
   };
 
   const copySecret = async () => {
@@ -221,6 +233,14 @@ export const TwoFactorAuth = ({ onStatusChange }: Props = {}) => {
           </div>
         </div>
       )}
+
+      <TotpChallenge
+        open={disableChallengeOpen}
+        onOpenChange={setDisableChallengeOpen}
+        onVerified={performDisable}
+        title="Confirm disabling 2FA"
+        description="For your security, enter your authenticator code or a recovery code to disable two-factor authentication."
+      />
     </div>
   );
 };
