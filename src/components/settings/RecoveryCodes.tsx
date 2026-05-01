@@ -33,6 +33,8 @@ export const RecoveryCodes = ({ twoFactorEnabled }: Props) => {
   const [busy, setBusy] = useState(false);
   const [remaining, setRemaining] = useState(0);
   const [freshCodes, setFreshCodes] = useState<string[] | null>(null);
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [copiedAll, setCopiedAll] = useState(false);
 
   const refresh = async () => {
     if (!user) return;
