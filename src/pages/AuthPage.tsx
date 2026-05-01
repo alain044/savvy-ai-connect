@@ -95,24 +95,85 @@ const AuthPage = () => {
     setMode('login');
   };
 
+  const [useRecovery, setUseRecovery] = useState(false);
+
   const handleMfaVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!mfaFactorId) return;
-    const digits = mfaCode.replace(/\D/g, '');
-    if (digits.length !== 6) { toast.error('Enter the 6-digit code'); return; }
     setLoading(true);
-    const { data: challenge, error: cErr } = await supabase.auth.mfa.challenge({ factorId: mfaFactorId });
-    if (cErr || !challenge) { setLoading(false); toast.error(cErr?.message ?? 'Challenge failed'); return; }
-    const { error: vErr } = await supabase.auth.mfa.verify({ factorId: mfaFactorId, challengeId: challenge.id, code: digits });
-    setLoading(false);
-    if (vErr) { toast.error(vErr.message); return; }
-    completeSignIn();
+    try {
+      if (useRecovery) {
+        const normalized = mfaCode.trim().toUpperCase().replace(/\s/g, '');
+        if (!normalized) throw new Error('Enter a recovery code');
+        const hash = await hashCode(normalized);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+        const { data: row } = await supabase
+          .from('mfa_recovery_codes')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('code_hash', hash)
+          .is('used_at', null)
+          .maybeSingle();
+        if (!row) throw new Error('Invalid or already used recovery code');
+        await supabase.from('mfa_recovery_codes').update({ used_at: new Date().toISOString() }).eq('id', row.id);
+        // Recovery bypass: remove the factor so session is no longer AAL2-gated.
+        await supabase.auth.mfa.unenroll({ factorId: mfaFactorId });
+        toast.success('Recovery code accepted. Please re-enroll 2FA from Settings.');
+        setLoading(false);
+        completeSignIn();
+        return;
+      }
+      const digits = mfaCode.replace(/\D/g, '');
+      if (digits.length !== 6) throw new Error('Enter the 6-digit code');
+      const { data: challenge, error: cErr } = await supabase.auth.mfa.challenge({ factorId: mfaFactorId });
+      if (cErr || !challenge) throw cErr || new Error('Challenge failed');
+      const { error: vErr } = await supabase.auth.mfa.verify({ factorId: mfaFactorId, challengeId: challenge.id, code: digits });
+      if (vErr) throw vErr;
+      setLoading(false);
+      completeSignIn();
+    } catch (err: any) {
+      setLoading(false);
+      toast.error(err.message);
+    }
+  };
+
+  const handleGoogle = async () => {
+    setLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth('google', {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        setLoading(false);
+        toast.error(result.error.message ?? 'Google sign-in failed');
+        return;
+      }
+      if (result.redirected) return;
+      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aal?.nextLevel === 'aal2' && aal.currentLevel !== 'aal2') {
+        const { data: factors } = await supabase.auth.mfa.listFactors();
+        const totp = factors?.totp?.find((f) => f.status === 'verified');
+        if (totp) {
+          setMfaFactorId(totp.id);
+          setMode('mfa');
+          setLoading(false);
+          return;
+        }
+      }
+      setLoading(false);
+      completeSignIn();
+    } catch (err: any) {
+      setLoading(false);
+      toast.error(err.message ?? 'Google sign-in failed');
+    }
   };
 
   const cancelMfa = async () => {
     await supabase.auth.signOut();
     setMfaFactorId(null);
     setMfaCode('');
+    setUseRecovery(false);
     setMode('login');
   };
 
