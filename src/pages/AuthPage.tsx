@@ -2,13 +2,19 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { lovable } from '@/integrations/lovable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/sonner';
-import { Loader2, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { Loader2, Eye, EyeOff, ShieldCheck, KeyRound } from 'lucide-react';
+
+const hashCode = async (code: string): Promise<string> => {
+  const data = new TextEncoder().encode(code);
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+};
 
 type Mode = 'login' | 'signup' | 'forgot' | 'mfa';
 
