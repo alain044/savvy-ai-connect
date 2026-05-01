@@ -195,28 +195,38 @@ const AuthPage = () => {
           {mode === 'mfa' ? (
             <form onSubmit={handleMfaVerify} className="space-y-4">
               <div className="rounded-lg border border-border bg-muted/30 p-3 flex items-start gap-2">
-                <ShieldCheck className="w-4 h-4 text-primary mt-0.5" />
+                {useRecovery ? <KeyRound className="w-4 h-4 text-primary mt-0.5" /> : <ShieldCheck className="w-4 h-4 text-primary mt-0.5" />}
                 <p className="text-xs text-muted-foreground">
-                  Open your authenticator app and enter the 6-digit code to finish signing in.
+                  {useRecovery
+                    ? 'Enter one of your saved recovery codes. It will be consumed and your authenticator will be reset — re-enroll 2FA after signing in.'
+                    : 'Open your authenticator app and enter the 6-digit code to finish signing in.'}
                 </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="mfaCode">Verification code</Label>
+                <Label htmlFor="mfaCode">{useRecovery ? 'Recovery code' : 'Verification code'}</Label>
                 <Input
                   id="mfaCode"
                   value={mfaCode}
-                  onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="123456"
-                  inputMode="numeric"
+                  onChange={(e) => setMfaCode(useRecovery ? e.target.value.toUpperCase().slice(0, 16) : e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder={useRecovery ? 'AB2CD-EFG3H' : '123456'}
+                  inputMode={useRecovery ? 'text' : 'numeric'}
                   autoComplete="one-time-code"
                   autoFocus
                   required
+                  className={useRecovery ? 'font-mono' : ''}
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Verify & sign in
               </Button>
+              <button
+                type="button"
+                onClick={() => { setUseRecovery((v) => !v); setMfaCode(''); }}
+                className="text-xs text-primary hover:underline w-full text-center"
+              >
+                {useRecovery ? 'Use authenticator code instead' : 'Use a recovery code instead'}
+              </button>
               <Button type="button" variant="ghost" className="w-full" onClick={cancelMfa}>
                 Cancel
               </Button>
