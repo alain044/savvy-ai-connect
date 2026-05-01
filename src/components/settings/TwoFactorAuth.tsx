@@ -233,6 +233,14 @@ export const TwoFactorAuth = ({ onStatusChange }: Props = {}) => {
           </div>
         </div>
       )}
+
+      <TotpChallenge
+        open={disableChallengeOpen}
+        onOpenChange={setDisableChallengeOpen}
+        onVerified={performDisable}
+        title="Confirm disabling 2FA"
+        description="For your security, enter your authenticator code or a recovery code to disable two-factor authentication."
+      />
     </div>
   );
 };
