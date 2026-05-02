@@ -59,14 +59,14 @@ export const MembershipRequests = () => {
   const isOwner = role === 'owner';
 
   const loadJoinCode = useCallback(async () => {
-    if (!organization) return;
+    if (!organization || role !== 'owner') return;
     const { data } = await supabase
       .from('organizations')
       .select('join_code')
       .eq('id', organization.id)
       .maybeSingle();
     if (data?.join_code) setCode(data.join_code);
-  }, [organization]);
+  }, [organization, role]);
 
   const fetchRequests = useCallback(async () => {
     if (!organization || !isAdmin) { setLoading(false); return; }
