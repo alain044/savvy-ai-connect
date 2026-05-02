@@ -19,9 +19,22 @@ interface OrgContextValue {
   refresh: () => Promise<void>;
   canManageTasks: boolean;
   canEditFinance: boolean;
+  isOwner: boolean;
+  isViewer: boolean;
+  canEdit: boolean;
 }
 
 const OrganizationContext = createContext<OrgContextValue>({
+  organization: null,
+  role: null,
+  loading: true,
+  refresh: async () => {},
+  canManageTasks: false,
+  canEditFinance: false,
+  isOwner: false,
+  isViewer: false,
+  canEdit: false,
+});
   organization: null,
   role: null,
   loading: true,
@@ -68,10 +81,13 @@ export const OrganizationProvider = ({ children }: { children: ReactNode }) => {
 
   const canManageTasks = role === 'owner' || role === 'accountant';
   const canEditFinance = role === 'owner' || role === 'accountant' || role === 'analyst';
+  const isOwner = role === 'owner';
+  const isViewer = role === 'viewer';
+  const canEdit = role !== 'viewer' && role !== null;
 
   return (
     <OrganizationContext.Provider
-      value={{ organization, role, loading, refresh, canManageTasks, canEditFinance }}
+      value={{ organization, role, loading, refresh, canManageTasks, canEditFinance, isOwner, isViewer, canEdit }}
     >
       {children}
     </OrganizationContext.Provider>
