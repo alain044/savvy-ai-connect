@@ -56,16 +56,17 @@ export const MembershipRequests = () => {
   const [confirm, setConfirm] = useState<{ id: string; action: 'approved' | 'rejected'; name: string } | null>(null);
 
   const isAdmin = role === 'owner' || role === 'accountant';
+  const isOwner = role === 'owner';
 
   const loadJoinCode = useCallback(async () => {
-    if (!organization) return;
+    if (!organization || role !== 'owner') return;
     const { data } = await supabase
       .from('organizations')
       .select('join_code')
       .eq('id', organization.id)
       .maybeSingle();
     if (data?.join_code) setCode(data.join_code);
-  }, [organization]);
+  }, [organization, role]);
 
   const fetchRequests = useCallback(async () => {
     if (!organization || !isAdmin) { setLoading(false); return; }
@@ -157,16 +158,22 @@ export const MembershipRequests = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="rounded-lg border border-border bg-muted/40 p-3 flex items-center gap-3">
-          <ShieldCheck className="w-5 h-5 text-primary shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground">Join code</p>
-            <p className="text-lg font-mono font-semibold tracking-widest">{code || '—'}</p>
+        {isOwner ? (
+          <div className="rounded-lg border border-border bg-muted/40 p-3 flex items-center gap-3">
+            <ShieldCheck className="w-5 h-5 text-primary shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground">Join code (owner only)</p>
+              <p className="text-lg font-mono font-semibold tracking-widest">{code || '—'}</p>
+            </div>
+            <Button size="sm" variant="outline" onClick={copyCode} disabled={!code}>
+              <Copy className="w-4 h-4 mr-1" /> Copy
+            </Button>
           </div>
-          <Button size="sm" variant="outline" onClick={copyCode} disabled={!code}>
-            <Copy className="w-4 h-4 mr-1" /> Copy
-          </Button>
-        </div>
+        ) : (
+          <div className="rounded-lg border border-dashed border-border bg-muted/20 p-3 text-xs text-muted-foreground">
+            Only the organization owner can view or share the join code. Ask your owner to invite you.
+          </div>
+        )}
 
         {!isAdmin ? (
           <p className="text-sm text-muted-foreground">Only owners and accountants can review join requests.</p>

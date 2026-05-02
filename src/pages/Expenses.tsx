@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 interface Expense {
   id: number;
@@ -29,6 +30,7 @@ const categories = ['Food', 'Transport', 'Entertainment', 'Utilities', 'Health',
 
 const Expenses = () => {
   const { t } = useTranslation();
+  const { isViewer } = useOrganization();
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
@@ -60,7 +62,9 @@ const Expenses = () => {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" />{t('expenses.addExpense')}</Button>
+            <Button disabled={isViewer} title={isViewer ? 'Viewers cannot add expenses' : undefined}>
+              <Plus className="w-4 h-4 mr-2" />{t('expenses.addExpense')}
+            </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>{t('expenses.addExpense')}</DialogTitle></DialogHeader>

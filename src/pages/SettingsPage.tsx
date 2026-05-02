@@ -23,6 +23,8 @@ import { TwoFactorAuth } from '@/components/settings/TwoFactorAuth';
 import { RecoveryCodes } from '@/components/settings/RecoveryCodes';
 import { TotpChallenge } from '@/components/settings/TotpChallenge';
 import { MembershipRequests } from '@/components/settings/MembershipRequests';
+import { UserManagementPanel } from '@/components/settings/UserManagementPanel';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { requestPushPermission, sendNotification, watchNotificationPermission, NotificationCategory } from '@/lib/notify';
 
 const diffObject = <T extends Record<string, any>>(prev: T, next: T): Partial<T> => {
@@ -38,6 +40,7 @@ const SettingsPage = () => {
   const { user } = useAuth();
   const { setCurrency: setGlobalCurrency } = useCurrency();
   const { refresh: refreshPrefs } = usePreferences();
+  const { isViewer } = useOrganization();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [auditRefresh, setAuditRefresh] = useState(0);
@@ -258,7 +261,18 @@ const SettingsPage = () => {
         <p className="text-muted-foreground">{t('settings.subtitle')}</p>
       </div>
 
+      {isViewer && (
+        <Alert>
+          <AlertTitle>Read-only access</AlertTitle>
+          <AlertDescription>
+            You're signed in as a <strong>Viewer</strong>. You can browse data but can't add, edit, or delete records.
+            Ask the organization owner to upgrade your role to make changes.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <OrganizationCard />
+      <UserManagementPanel />
 
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
@@ -316,7 +330,7 @@ const SettingsPage = () => {
                 <Label htmlFor="bio">{t('settings.bio')}</Label>
                 <Textarea id="bio" value={profile.bio} onChange={(e) => setProfile({ ...profile, bio: e.target.value })} rows={3} />
               </div>
-              <Button onClick={handleSaveProfile} disabled={saving} className="flex items-center gap-2">
+              <Button onClick={handleSaveProfile} disabled={saving || isViewer} className="flex items-center gap-2">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {t('settings.save')}
               </Button>
@@ -371,7 +385,7 @@ const SettingsPage = () => {
                   <Switch checked={preferences.showBalances} onCheckedChange={(v) => setPreferences({ ...preferences, showBalances: v })} />
                 </div>
               </div>
-              <Button onClick={handleSavePreferences} disabled={saving} className="flex items-center gap-2">
+              <Button onClick={handleSavePreferences} disabled={saving || isViewer} className="flex items-center gap-2">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {t('settings.save')}
               </Button>
@@ -452,7 +466,7 @@ const SettingsPage = () => {
                 </div>
               ))}
               <div className="flex flex-wrap items-center gap-2 pt-2">
-                <Button onClick={handleSaveNotifications} disabled={saving} className="flex items-center gap-2">
+                <Button onClick={handleSaveNotifications} disabled={saving || isViewer} className="flex items-center gap-2">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   {t('settings.save')}
                 </Button>
