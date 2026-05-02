@@ -35,13 +35,6 @@ const OrganizationContext = createContext<OrgContextValue>({
   isViewer: false,
   canEdit: false,
 });
-  organization: null,
-  role: null,
-  loading: true,
-  refresh: async () => {},
-  canManageTasks: false,
-  canEditFinance: false,
-});
 
 export const useOrganization = () => useContext(OrganizationContext);
 
