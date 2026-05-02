@@ -23,6 +23,8 @@ import { TwoFactorAuth } from '@/components/settings/TwoFactorAuth';
 import { RecoveryCodes } from '@/components/settings/RecoveryCodes';
 import { TotpChallenge } from '@/components/settings/TotpChallenge';
 import { MembershipRequests } from '@/components/settings/MembershipRequests';
+import { UserManagementPanel } from '@/components/settings/UserManagementPanel';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { requestPushPermission, sendNotification, watchNotificationPermission, NotificationCategory } from '@/lib/notify';
 
 const diffObject = <T extends Record<string, any>>(prev: T, next: T): Partial<T> => {
@@ -38,6 +40,7 @@ const SettingsPage = () => {
   const { user } = useAuth();
   const { setCurrency: setGlobalCurrency } = useCurrency();
   const { refresh: refreshPrefs } = usePreferences();
+  const { isViewer, role } = useOrganization();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [auditRefresh, setAuditRefresh] = useState(0);
@@ -258,7 +261,18 @@ const SettingsPage = () => {
         <p className="text-muted-foreground">{t('settings.subtitle')}</p>
       </div>
 
+      {isViewer && (
+        <Alert>
+          <AlertTitle>Read-only access</AlertTitle>
+          <AlertDescription>
+            You're signed in as a <strong>Viewer</strong>. You can browse data but can't add, edit, or delete records.
+            Ask the organization owner to upgrade your role to make changes.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <OrganizationCard />
+      <UserManagementPanel />
 
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
