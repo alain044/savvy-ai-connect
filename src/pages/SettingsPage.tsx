@@ -330,7 +330,7 @@ const SettingsPage = () => {
                 <Label htmlFor="bio">{t('settings.bio')}</Label>
                 <Textarea id="bio" value={profile.bio} onChange={(e) => setProfile({ ...profile, bio: e.target.value })} rows={3} />
               </div>
-              <Button onClick={handleSaveProfile} disabled={saving} className="flex items-center gap-2">
+              <Button onClick={handleSaveProfile} disabled={saving || isViewer} className="flex items-center gap-2">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {t('settings.save')}
               </Button>
@@ -385,7 +385,7 @@ const SettingsPage = () => {
                   <Switch checked={preferences.showBalances} onCheckedChange={(v) => setPreferences({ ...preferences, showBalances: v })} />
                 </div>
               </div>
-              <Button onClick={handleSavePreferences} disabled={saving} className="flex items-center gap-2">
+              <Button onClick={handleSavePreferences} disabled={saving || isViewer} className="flex items-center gap-2">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {t('settings.save')}
               </Button>
@@ -466,7 +466,7 @@ const SettingsPage = () => {
                 </div>
               ))}
               <div className="flex flex-wrap items-center gap-2 pt-2">
-                <Button onClick={handleSaveNotifications} disabled={saving} className="flex items-center gap-2">
+                <Button onClick={handleSaveNotifications} disabled={saving || isViewer} className="flex items-center gap-2">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   {t('settings.save')}
                 </Button>
