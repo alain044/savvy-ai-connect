@@ -40,7 +40,7 @@ const SettingsPage = () => {
   const { user } = useAuth();
   const { setCurrency: setGlobalCurrency } = useCurrency();
   const { refresh: refreshPrefs } = usePreferences();
-  const { isViewer, role } = useOrganization();
+  const { isViewer } = useOrganization();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [auditRefresh, setAuditRefresh] = useState(0);
