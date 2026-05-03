@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 
@@ -7,6 +8,7 @@ export interface UserPreferences {
   startOfWeek: string;
   compactView: boolean;
   showBalances: boolean;
+  language: string;
 }
 
 export interface UserNotifications {
@@ -23,6 +25,7 @@ const DEFAULT_PREFS: UserPreferences = {
   startOfWeek: 'monday',
   compactView: false,
   showBalances: true,
+  language: 'en',
 };
 
 const DEFAULT_NOTIFS: UserNotifications = {
