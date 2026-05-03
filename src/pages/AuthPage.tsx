@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/components/ui/sonner';
-import { Loader2, Eye, EyeOff, ShieldCheck, KeyRound } from 'lucide-react';
+import { Loader2, Eye, EyeOff, ShieldCheck, KeyRound, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const hashCode = async (code: string): Promise<string> => {
   const data = new TextEncoder().encode(code);
