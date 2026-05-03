@@ -92,7 +92,7 @@ const AuthPage = () => {
     });
     setLoading(false);
     if (error) { toast.error(error.message); return; }
-    toast.success('Check your inbox for a password reset link.');
+    toast.success('Reset link sent. Check your inbox (and spam folder) for instructions.', { duration: 6000 });
     setMode('login');
   };
 
