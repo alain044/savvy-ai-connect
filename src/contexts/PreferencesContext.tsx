@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 
@@ -7,6 +8,7 @@ export interface UserPreferences {
   startOfWeek: string;
   compactView: boolean;
   showBalances: boolean;
+  language: string;
 }
 
 export interface UserNotifications {
@@ -23,6 +25,7 @@ const DEFAULT_PREFS: UserPreferences = {
   startOfWeek: 'monday',
   compactView: false,
   showBalances: true,
+  language: 'en',
 };
 
 const DEFAULT_NOTIFS: UserNotifications = {
@@ -47,9 +50,14 @@ const PreferencesContext = createContext<Ctx | null>(null);
 
 export const PreferencesProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
+  const { i18n } = useTranslation();
   const [preferences, setPrefs] = useState<UserPreferences>(DEFAULT_PREFS);
   const [notifications, setNotifs] = useState<UserNotifications>(DEFAULT_NOTIFS);
   const [loading, setLoading] = useState(true);
+
+  const applyLanguage = useCallback((lang?: string) => {
+    if (lang && lang !== i18n.language) i18n.changeLanguage(lang);
+  }, [i18n]);
 
   const refresh = useCallback(async () => {
     if (!user) return;
@@ -60,11 +68,15 @@ export const PreferencesProvider = ({ children }: { children: ReactNode }) => {
       .eq('user_id', user.id)
       .maybeSingle();
     if (data) {
-      if (data.preferences) setPrefs({ ...DEFAULT_PREFS, ...(data.preferences as any) });
+      if (data.preferences) {
+        const merged = { ...DEFAULT_PREFS, ...(data.preferences as any) };
+        setPrefs(merged);
+        applyLanguage(merged.language);
+      }
       if (data.notifications) setNotifs({ ...DEFAULT_NOTIFS, ...(data.notifications as any) });
     }
     setLoading(false);
-  }, [user]);
+  }, [user, applyLanguage]);
 
   useEffect(() => {
     refresh();
@@ -79,13 +91,36 @@ export const PreferencesProvider = ({ children }: { children: ReactNode }) => {
         { event: '*', schema: 'public', table: 'user_settings', filter: `user_id=eq.${user.id}` },
         (payload: any) => {
           const next = payload.new;
-          if (next?.preferences) setPrefs({ ...DEFAULT_PREFS, ...next.preferences });
+          if (next?.preferences) {
+            const merged = { ...DEFAULT_PREFS, ...next.preferences };
+            setPrefs(merged);
+            applyLanguage(merged.language);
+          }
           if (next?.notifications) setNotifs({ ...DEFAULT_NOTIFS, ...next.notifications });
         },
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [user]);
+  }, [user, applyLanguage]);
+
+  // Persist language to DB whenever the user switches it via the LanguageSelector
+  useEffect(() => {
+    if (!user) return;
+    const onChange = (lng: string) => {
+      setPrefs((prev) => {
+        if (prev.language === lng) return prev;
+        const next = { ...prev, language: lng };
+        supabase
+          .from('user_settings')
+          .update({ preferences: next as any })
+          .eq('user_id', user.id)
+          .then(() => {});
+        return next;
+      });
+    };
+    i18n.on('languageChanged', onChange);
+    return () => { i18n.off('languageChanged', onChange); };
+  }, [user, i18n]);
 
   return (
     <PreferencesContext.Provider

@@ -128,18 +128,20 @@ export const UserManagementPanel = () => {
           <div className="space-y-2">
             {members.map((m) => {
               const p = profiles[m.user_id];
-              const name = p?.full_name || p?.email || 'Member';
+              const hasName = !!p?.full_name?.trim();
+              const name = hasName ? p!.full_name! : (p?.email || 'Pending profile');
+              const subline = hasName ? (p?.email || 'No email on file') : (p?.email ? null : 'No email on file');
               const isSelf = m.user_id === user?.id;
               return (
                 <div key={m.id} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-sm font-medium text-foreground truncate">{name}</p>
                       {isSelf && <Badge variant="outline" className="text-xs">You</Badge>}
                       {m.role === 'owner' && <Crown className="w-3.5 h-3.5 text-amber-500" />}
                       <Badge variant="outline" className={roleColor[m.role]}>{m.role}</Badge>
                     </div>
-                    {p?.email && <p className="text-xs text-muted-foreground truncate">{p.email}</p>}
+                    {subline && <p className="text-xs text-muted-foreground truncate mt-0.5">{subline}</p>}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Select

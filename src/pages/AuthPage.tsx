@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/components/ui/sonner';
-import { Loader2, Eye, EyeOff, ShieldCheck, KeyRound } from 'lucide-react';
+import { Loader2, Eye, EyeOff, ShieldCheck, KeyRound, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const hashCode = async (code: string): Promise<string> => {
   const data = new TextEncoder().encode(code);
@@ -91,7 +92,7 @@ const AuthPage = () => {
     });
     setLoading(false);
     if (error) { toast.error(error.message); return; }
-    toast.success('Check your inbox for a password reset link.');
+    toast.success('Reset link sent. Check your inbox (and spam folder) for instructions.', { duration: 6000 });
     setMode('login');
   };
 
@@ -180,7 +181,13 @@ const AuthPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
+        <CardHeader className="text-center relative">
+          <Link
+            to="/"
+            className="absolute left-4 top-4 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" /> Home
+          </Link>
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-accent-foreground bg-clip-text text-transparent">
             {t('auth.title')}
           </CardTitle>
