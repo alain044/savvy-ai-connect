@@ -14,6 +14,129 @@ export type Database = {
   }
   public: {
     Tables: {
+      departments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          head_user_id: string | null
+          id: string
+          name: string
+          organization_id: string
+          parent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          head_user_id?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          head_user_id?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees: {
+        Row: {
+          banking: Json | null
+          created_at: string
+          department_id: string | null
+          emergency_contact: Json | null
+          employee_code: string | null
+          hire_date: string | null
+          id: string
+          insurance: Json | null
+          job_title: string | null
+          organization_id: string
+          profile_completion: number
+          reports_to: string | null
+          status: string
+          team_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          banking?: Json | null
+          created_at?: string
+          department_id?: string | null
+          emergency_contact?: Json | null
+          employee_code?: string | null
+          hire_date?: string | null
+          id?: string
+          insurance?: Json | null
+          job_title?: string | null
+          organization_id: string
+          profile_completion?: number
+          reports_to?: string | null
+          status?: string
+          team_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          banking?: Json | null
+          created_at?: string
+          department_id?: string | null
+          emergency_contact?: Json | null
+          employee_code?: string | null
+          hire_date?: string | null
+          id?: string
+          insurance?: Json | null
+          job_title?: string | null
+          organization_id?: string
+          profile_completion?: number
+          reports_to?: string | null
+          status?: string
+          team_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_reports_to_fkey"
+            columns: ["reports_to"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       holdings: {
         Row: {
           asset_type: string
@@ -405,6 +528,50 @@ export type Database = {
           },
         ]
       }
+      teams: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          department_id: string
+          description: string | null
+          id: string
+          manager_user_id: string | null
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          department_id: string
+          description?: string | null
+          id?: string
+          manager_user_id?: string | null
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          department_id?: string
+          description?: string | null
+          id?: string
+          manager_user_id?: string | null
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teams_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_settings: {
         Row: {
           created_at: string
@@ -484,7 +651,16 @@ export type Database = {
         }[]
       }
       generate_join_code: { Args: never; Returns: string }
+      get_active_org: { Args: { _user_id: string }; Returns: string }
       get_user_org: { Args: { _user_id: string }; Returns: string }
+      has_any_role: {
+        Args: {
+          _org_id: string
+          _roles: Database["public"]["Enums"]["app_role"][]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _org_id: string
@@ -499,7 +675,19 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "owner" | "accountant" | "analyst" | "viewer"
+      app_role:
+        | "owner"
+        | "accountant"
+        | "analyst"
+        | "viewer"
+        | "ceo"
+        | "cfo"
+        | "finance_manager"
+        | "accounting_manager"
+        | "hr_manager"
+        | "auditor"
+        | "team_manager"
+        | "employee"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -627,7 +815,20 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["owner", "accountant", "analyst", "viewer"],
+      app_role: [
+        "owner",
+        "accountant",
+        "analyst",
+        "viewer",
+        "ceo",
+        "cfo",
+        "finance_manager",
+        "accounting_manager",
+        "hr_manager",
+        "auditor",
+        "team_manager",
+        "employee",
+      ],
     },
   },
 } as const

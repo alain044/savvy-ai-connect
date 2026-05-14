@@ -26,14 +26,29 @@ interface ProfileLite {
   email: string | null;
 }
 
-const ROLE_OPTIONS: AppRole[] = ['owner', 'accountant', 'analyst', 'viewer'];
+const ROLE_OPTIONS: AppRole[] = [
+  'owner', 'ceo', 'cfo',
+  'finance_manager', 'accounting_manager', 'hr_manager',
+  'team_manager', 'accountant', 'analyst',
+  'auditor', 'employee', 'viewer',
+];
 
 const roleColor: Record<AppRole, string> = {
   owner: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
-  accountant: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  ceo: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+  cfo: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+  finance_manager: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  accounting_manager: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  hr_manager: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  team_manager: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  accountant: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
   analyst: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
+  auditor: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+  employee: 'bg-muted text-muted-foreground border-border',
   viewer: 'bg-muted text-muted-foreground border-border',
 };
+
+const roleLabel = (r: AppRole) => r.replace(/_/g, ' ');
 
 export const UserManagementPanel = () => {
   const { user } = useAuth();
@@ -139,7 +154,7 @@ export const UserManagementPanel = () => {
                       <p className="text-sm font-medium text-foreground truncate">{name}</p>
                       {isSelf && <Badge variant="outline" className="text-xs">You</Badge>}
                       {m.role === 'owner' && <Crown className="w-3.5 h-3.5 text-amber-500" />}
-                      <Badge variant="outline" className={roleColor[m.role]}>{m.role}</Badge>
+                      <Badge variant="outline" className={`${roleColor[m.role]} capitalize`}>{roleLabel(m.role)}</Badge>
                     </div>
                     {subline && <p className="text-xs text-muted-foreground truncate mt-0.5">{subline}</p>}
                   </div>
@@ -149,12 +164,12 @@ export const UserManagementPanel = () => {
                       onValueChange={(v) => changeRole(m, v as AppRole)}
                       disabled={savingId === m.id || isSelf}
                     >
-                      <SelectTrigger className="w-32 h-8 text-xs">
+                      <SelectTrigger className="w-40 h-8 text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {ROLE_OPTIONS.map((r) => (
-                          <SelectItem key={r} value={r} className="capitalize text-xs">{r}</SelectItem>
+                          <SelectItem key={r} value={r} className="capitalize text-xs">{roleLabel(r)}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
