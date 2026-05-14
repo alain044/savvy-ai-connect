@@ -21,6 +21,7 @@ import MarketDataPage from "./pages/MarketDataPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import SettingsPage from "./pages/SettingsPage";
+import EnterprisePage from "./pages/EnterprisePage";
 import AuthPage from "./pages/AuthPage";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -81,6 +82,7 @@ const OrgGate = () => {
         <Route path="/portfolio-advisor" element={<Navigate to="/ai-insights" replace />} />
         <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/organization" element={<EnterprisePage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

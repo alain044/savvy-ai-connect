@@ -4,11 +4,12 @@ import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, Receipt, PiggyBank, Target, Sparkles,
   Briefcase, TrendingUp, BarChart3, Bell, ListChecks,
-  Settings, ChevronLeft, ChevronRight, LogOut, Building2
+  Settings, ChevronLeft, ChevronRight, LogOut, Building2, Network
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import LanguageSelector from '@/components/LanguageSelector';
 import ThemeToggle from '@/components/ThemeToggle';
+import { OrgSwitcher } from '@/components/layout/OrgSwitcher';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -70,6 +71,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
     { to: '/analytics', icon: BarChart3, label: t('nav.analytics') },
     { to: '/ai-insights', icon: Sparkles, label: t('nav.aiInsights') },
     { to: '/notifications', icon: Bell, label: t('nav.notifications') },
+    { to: '/organization', icon: Network, label: 'Organization' },
     { to: '/settings', icon: Settings, label: t('nav.settings') },
   ];
 
@@ -130,16 +132,16 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
           </button>
         </div>
 
-        {/* Org banner */}
-        {organization && !collapsed && (
-          <div className="px-4 py-3 border-b border-border bg-accent/30">
-            <div className="flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-primary shrink-0" />
-              <div className="min-w-0">
+        {/* Org banner / switcher */}
+        {organization && (
+          <div className="px-2 py-2 border-b border-border bg-accent/30">
+            <OrgSwitcher collapsed={collapsed} />
+            {!collapsed && (
+              <div className="px-2 pt-1 flex items-center gap-2">
+                <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
                 <p className="text-sm font-semibold truncate">{organization.name}</p>
-                {role && <p className="text-xs text-muted-foreground capitalize">{t(`roles.${role}`)}</p>}
               </div>
-            </div>
+            )}
           </div>
         )}
 
