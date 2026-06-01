@@ -3,6 +3,8 @@ import { Wallet, TrendingUp, TrendingDown, PiggyBank, Eye, EyeOff } from 'lucide
 import FinanceStatCard from '@/components/dashboard/FinanceStatCard';
 import SpendingChart from '@/components/dashboard/SpendingChart';
 import RecentTransactions from '@/components/dashboard/RecentTransactions';
+import TeamCollaboration from '@/components/dashboard/TeamCollaboration';
+import VoiceBriefings from '@/components/dashboard/VoiceBriefings';
 import { Button } from '@/components/ui/button';
 import { usePreferences, maskValue } from '@/contexts/PreferencesContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -53,6 +55,12 @@ const Index = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <SpendingChart />
         <RecentTransactions />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <TeamCollaboration />
+        </div>
+        <VoiceBriefings />
       </div>
     </div>
   );
