@@ -14,6 +14,103 @@ export type Database = {
   }
   public: {
     Tables: {
+      collab_messages: {
+        Row: {
+          body: string
+          client_nonce: string | null
+          created_at: string
+          id: string
+          mentions: string[]
+          organization_id: string
+          sender_id: string
+          thread_id: string
+        }
+        Insert: {
+          body: string
+          client_nonce?: string | null
+          created_at?: string
+          id?: string
+          mentions?: string[]
+          organization_id: string
+          sender_id: string
+          thread_id: string
+        }
+        Update: {
+          body?: string
+          client_nonce?: string | null
+          created_at?: string
+          id?: string
+          mentions?: string[]
+          organization_id?: string
+          sender_id?: string
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collab_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "collab_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collab_read_receipts: {
+        Row: {
+          last_read_at: string
+          thread_id: string
+          user_id: string
+        }
+        Insert: {
+          last_read_at?: string
+          thread_id: string
+          user_id: string
+        }
+        Update: {
+          last_read_at?: string
+          thread_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collab_read_receipts_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "collab_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collab_threads: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          last_message_at: string
+          organization_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          last_message_at?: string
+          organization_id: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          last_message_at?: string
+          organization_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       departments: {
         Row: {
           created_at: string
@@ -596,6 +693,103 @@ export type Database = {
           preferences?: Json | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      voice_briefing_assignments: {
+        Row: {
+          assigned_at: string
+          briefing_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          briefing_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          briefing_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_briefing_assignments_briefing_id_fkey"
+            columns: ["briefing_id"]
+            isOneToOne: false
+            referencedRelation: "voice_briefings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_briefing_plays: {
+        Row: {
+          briefing_id: string
+          completed: boolean
+          id: string
+          played_at: string
+          user_id: string
+        }
+        Insert: {
+          briefing_id: string
+          completed?: boolean
+          id?: string
+          played_at?: string
+          user_id: string
+        }
+        Update: {
+          briefing_id?: string
+          completed?: boolean
+          id?: string
+          played_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_briefing_plays_briefing_id_fkey"
+            columns: ["briefing_id"]
+            isOneToOne: false
+            referencedRelation: "voice_briefings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_briefings: {
+        Row: {
+          audio_url: string | null
+          created_at: string
+          created_by: string
+          duration_seconds: number
+          id: string
+          metadata: Json
+          organization_id: string
+          script: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string
+          created_by: string
+          duration_seconds?: number
+          id?: string
+          metadata?: Json
+          organization_id: string
+          script?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string
+          created_by?: string
+          duration_seconds?: number
+          id?: string
+          metadata?: Json
+          organization_id?: string
+          script?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
