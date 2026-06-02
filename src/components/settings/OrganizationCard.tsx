@@ -24,7 +24,7 @@ export const OrganizationCard = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button onClick={() => navigate('/')} className="flex items-center gap-2">
+          <Button onClick={() => navigate('/dashboard')} className="flex items-center gap-2">
             Complete onboarding <ArrowRight className="w-4 h-4" />
           </Button>
         </CardContent>
