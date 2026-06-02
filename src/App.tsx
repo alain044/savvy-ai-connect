@@ -9,6 +9,7 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { OrganizationProvider, useOrganization } from "@/contexts/OrganizationContext";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import AppLayout from "@/components/layout/AppLayout";
+import Landing from "./pages/Landing";
 import Index from "./pages/Index";
 import OnboardingOrg from "./pages/OnboardingOrg";
 import TasksPage from "./pages/TasksPage";
@@ -93,7 +94,7 @@ const OrgGate = () => {
 const AuthRoute = () => {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/dashboard" replace />;
   return <AuthPage />;
 };
 
@@ -106,9 +107,23 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <Routes>
+              <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<AuthRoute />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/*" element={<ProtectedRoutes />} />
+              <Route path="/dashboard/*" element={<ProtectedRoutes />} />
+              {/* Legacy: redirect old top-level dashboard paths */}
+              <Route path="/expenses" element={<Navigate to="/dashboard/expenses" replace />} />
+              <Route path="/budgets" element={<Navigate to="/dashboard/budgets" replace />} />
+              <Route path="/savings" element={<Navigate to="/dashboard/savings" replace />} />
+              <Route path="/tasks" element={<Navigate to="/dashboard/tasks" replace />} />
+              <Route path="/portfolio" element={<Navigate to="/dashboard/portfolio" replace />} />
+              <Route path="/market" element={<Navigate to="/dashboard/market" replace />} />
+              <Route path="/ai-insights" element={<Navigate to="/dashboard/ai-insights" replace />} />
+              <Route path="/analytics" element={<Navigate to="/dashboard/analytics" replace />} />
+              <Route path="/notifications" element={<Navigate to="/dashboard/notifications" replace />} />
+              <Route path="/organization" element={<Navigate to="/dashboard/organization" replace />} />
+              <Route path="/settings" element={<Navigate to="/dashboard/settings" replace />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>
         </BrowserRouter>
