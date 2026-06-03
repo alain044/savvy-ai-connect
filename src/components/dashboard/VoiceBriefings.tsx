@@ -47,12 +47,16 @@ export default function VoiceBriefings() {
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { canView, canManage } = useModuleAccess('voice_briefings');
+  const PAGE_SIZE = 10;
   const [briefings, setBriefings] = useState<Briefing[]>([]);
   const [playedIds, setPlayedIds] = useState<Set<string>>(new Set());
   const [activeId, setActiveId] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<'all' | 'played' | 'unplayed'>('all');
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: '', script: '' });
   const [saving, setSaving] = useState(false);
@@ -60,29 +64,57 @@ export default function VoiceBriefings() {
 
   useEffect(() => () => window.speechSynthesis?.cancel(), []);
 
+  const fetchPage = async (from: number) => {
+    if (!organization || !user) return { items: [] as Briefing[], end: true };
+    let q = supabase
+      .from('voice_briefings')
+      .select('*')
+      .eq('organization_id', organization.id)
+      .order('created_at', { ascending: false })
+      .range(from, from + PAGE_SIZE - 1);
+    if (search.trim()) q = q.ilike('title', `%${search.trim()}%`);
+    const { data } = await q;
+    const items = (data ?? []) as Briefing[];
+    return { items, end: items.length < PAGE_SIZE };
+  };
+
   useEffect(() => {
     if (!user || !organization || !canView) { setLoading(false); return; }
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const [{ data: bs }, { data: plays }] = await Promise.all([
-        supabase.from('voice_briefings').select('*').eq('organization_id', organization.id).order('created_at', { ascending: false }).limit(50),
+      const [{ items, end }, { data: plays }] = await Promise.all([
+        fetchPage(0),
         supabase.from('voice_briefing_plays').select('briefing_id').eq('user_id', user.id),
       ]);
       if (cancelled) return;
-      setBriefings((bs ?? []) as Briefing[]);
+      setBriefings(items);
+      setHasMore(!end);
       setPlayedIds(new Set((plays ?? []).map((p: any) => p.briefing_id)));
-      if (bs && bs.length) setActiveId(bs[0].id);
+      if (items.length) setActiveId(items[0].id);
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [user, organization, canView]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, organization, canView, search]);
+
+  const loadMore = async () => {
+    setLoadingMore(true);
+    const { items, end } = await fetchPage(briefings.length);
+    setBriefings((prev) => [...prev, ...items]);
+    setHasMore(!end);
+    setLoadingMore(false);
+  };
+
+  const clearFilters = () => { setSearch(''); setFilter('all'); };
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return briefings;
-    return briefings.filter((b) => b.title.toLowerCase().includes(q) || b.script.toLowerCase().includes(q));
-  }, [briefings, search]);
+    return briefings.filter((b) => {
+      if (filter === 'played' && !playedIds.has(b.id)) return false;
+      if (filter === 'unplayed' && playedIds.has(b.id)) return false;
+      return true;
+    });
+  }, [briefings, filter, playedIds]);
 
   const current = briefings.find((b) => b.id === activeId) ?? filtered[0] ?? null;
 
@@ -207,12 +239,28 @@ export default function VoiceBriefings() {
           </p>
         )}
 
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-muted-foreground" />
-          <Input className="pl-8 h-9" placeholder="Search briefings…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <div className="space-y-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-muted-foreground" />
+            <Input className="pl-8 h-9" placeholder="Search briefings by title…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <div className="flex items-center gap-1 flex-wrap">
+            {(['all', 'unplayed', 'played'] as const).map((f) => (
+              <Button key={f} size="sm" variant={filter === f ? 'default' : 'outline'}
+                className="h-7 px-2 text-xs capitalize" onClick={() => setFilter(f)}>
+                {f}
+              </Button>
+            ))}
+            {(search || filter !== 'all') && (
+              <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={clearFilters}>
+                Clear
+              </Button>
+            )}
+            <span className="ml-auto text-[11px] text-muted-foreground">{filtered.length} shown</span>
+          </div>
         </div>
 
-        <div className="space-y-2 max-h-[260px] overflow-y-auto">
+        <div className="space-y-2 max-h-[300px] overflow-y-auto">
           {filtered.map((b) => {
             const played = playedIds.has(b.id);
             return (
@@ -240,6 +288,11 @@ export default function VoiceBriefings() {
           })}
           {!loading && filtered.length === 0 && (
             <p className="text-xs text-muted-foreground text-center py-4">No matches.</p>
+          )}
+          {hasMore && !search && filter === 'all' && (
+            <Button variant="outline" size="sm" className="w-full" onClick={loadMore} disabled={loadingMore}>
+              {loadingMore ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Load more'}
+            </Button>
           )}
         </div>
       </CardContent>
