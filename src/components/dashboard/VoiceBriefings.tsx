@@ -47,12 +47,16 @@ export default function VoiceBriefings() {
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { canView, canManage } = useModuleAccess('voice_briefings');
+  const PAGE_SIZE = 10;
   const [briefings, setBriefings] = useState<Briefing[]>([]);
   const [playedIds, setPlayedIds] = useState<Set<string>>(new Set());
   const [activeId, setActiveId] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<'all' | 'played' | 'unplayed'>('all');
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ title: '', script: '' });
   const [saving, setSaving] = useState(false);
@@ -60,23 +64,49 @@ export default function VoiceBriefings() {
 
   useEffect(() => () => window.speechSynthesis?.cancel(), []);
 
+  const fetchPage = async (from: number) => {
+    if (!organization || !user) return { items: [] as Briefing[], end: true };
+    let q = supabase
+      .from('voice_briefings')
+      .select('*')
+      .eq('organization_id', organization.id)
+      .order('created_at', { ascending: false })
+      .range(from, from + PAGE_SIZE - 1);
+    if (search.trim()) q = q.ilike('title', `%${search.trim()}%`);
+    const { data } = await q;
+    const items = (data ?? []) as Briefing[];
+    return { items, end: items.length < PAGE_SIZE };
+  };
+
   useEffect(() => {
     if (!user || !organization || !canView) { setLoading(false); return; }
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const [{ data: bs }, { data: plays }] = await Promise.all([
-        supabase.from('voice_briefings').select('*').eq('organization_id', organization.id).order('created_at', { ascending: false }).limit(50),
+      const [{ items, end }, { data: plays }] = await Promise.all([
+        fetchPage(0),
         supabase.from('voice_briefing_plays').select('briefing_id').eq('user_id', user.id),
       ]);
       if (cancelled) return;
-      setBriefings((bs ?? []) as Briefing[]);
+      setBriefings(items);
+      setHasMore(!end);
       setPlayedIds(new Set((plays ?? []).map((p: any) => p.briefing_id)));
-      if (bs && bs.length) setActiveId(bs[0].id);
+      if (items.length) setActiveId(items[0].id);
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [user, organization, canView]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, organization, canView, search]);
+
+  const loadMore = async () => {
+    setLoadingMore(true);
+    const { items, end } = await fetchPage(briefings.length);
+    setBriefings((prev) => [...prev, ...items]);
+    setHasMore(!end);
+    setLoadingMore(false);
+  };
+
+  const clearFilters = () => { setSearch(''); setFilter('all'); };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
