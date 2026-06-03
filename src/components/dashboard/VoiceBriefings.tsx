@@ -239,12 +239,28 @@ export default function VoiceBriefings() {
           </p>
         )}
 
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-muted-foreground" />
-          <Input className="pl-8 h-9" placeholder="Search briefings…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <div className="space-y-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-muted-foreground" />
+            <Input className="pl-8 h-9" placeholder="Search briefings by title…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <div className="flex items-center gap-1 flex-wrap">
+            {(['all', 'unplayed', 'played'] as const).map((f) => (
+              <Button key={f} size="sm" variant={filter === f ? 'default' : 'outline'}
+                className="h-7 px-2 text-xs capitalize" onClick={() => setFilter(f)}>
+                {f}
+              </Button>
+            ))}
+            {(search || filter !== 'all') && (
+              <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={clearFilters}>
+                Clear
+              </Button>
+            )}
+            <span className="ml-auto text-[11px] text-muted-foreground">{filtered.length} shown</span>
+          </div>
         </div>
 
-        <div className="space-y-2 max-h-[260px] overflow-y-auto">
+        <div className="space-y-2 max-h-[300px] overflow-y-auto">
           {filtered.map((b) => {
             const played = playedIds.has(b.id);
             return (
@@ -272,6 +288,11 @@ export default function VoiceBriefings() {
           })}
           {!loading && filtered.length === 0 && (
             <p className="text-xs text-muted-foreground text-center py-4">No matches.</p>
+          )}
+          {hasMore && !search && filter === 'all' && (
+            <Button variant="outline" size="sm" className="w-full" onClick={loadMore} disabled={loadingMore}>
+              {loadingMore ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Load more'}
+            </Button>
           )}
         </div>
       </CardContent>
