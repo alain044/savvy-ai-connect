@@ -109,10 +109,12 @@ export default function VoiceBriefings() {
   const clearFilters = () => { setSearch(''); setFilter('all'); };
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return briefings;
-    return briefings.filter((b) => b.title.toLowerCase().includes(q) || b.script.toLowerCase().includes(q));
-  }, [briefings, search]);
+    return briefings.filter((b) => {
+      if (filter === 'played' && !playedIds.has(b.id)) return false;
+      if (filter === 'unplayed' && playedIds.has(b.id)) return false;
+      return true;
+    });
+  }, [briefings, filter, playedIds]);
 
   const current = briefings.find((b) => b.id === activeId) ?? filtered[0] ?? null;
 
