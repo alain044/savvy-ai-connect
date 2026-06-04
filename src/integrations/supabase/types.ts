@@ -453,6 +453,47 @@ export type Database = {
         }
         Relationships: []
       }
+      presence_telemetry: {
+        Row: {
+          channel: string
+          created_at: string
+          event_type: string
+          id: string
+          latency_ms: number | null
+          metadata: Json
+          organization_id: string
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          event_type: string
+          id?: string
+          latency_ms?: number | null
+          metadata?: Json
+          organization_id: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          latency_ms?: number | null
+          metadata?: Json
+          organization_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presence_telemetry_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       price_alerts: {
         Row: {
           active: boolean
@@ -538,6 +579,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          can_manage: boolean
+          can_view: boolean
+          created_at: string
+          id: string
+          module: string
+          organization_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          can_manage?: boolean
+          can_view?: boolean
+          created_at?: string
+          id?: string
+          module: string
+          organization_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          can_manage?: boolean
+          can_view?: boolean
+          created_at?: string
+          id?: string
+          module?: string
+          organization_id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       settings_audit_log: {
         Row: {
