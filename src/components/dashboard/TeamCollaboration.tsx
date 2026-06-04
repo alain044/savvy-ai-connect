@@ -11,6 +11,7 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { useModuleAccess } from '@/hooks/useModuleAccess';
 import AccessDenied from '@/components/AccessDenied';
 import { toast } from '@/components/ui/sonner';
+import { logPresenceEvent } from '@/lib/presenceTelemetry';
 
 type Message = {
   id: string;
@@ -106,7 +107,9 @@ export default function TeamCollaboration() {
   // realtime + presence + typing
   useEffect(() => {
     if (!user || !organization || !thread) return;
-    const ch = supabase.channel(`collab:${thread.id}`, {
+    const channelName = `collab:${thread.id}`;
+    const connectStart = performance.now();
+    const ch = supabase.channel(channelName, {
       config: { presence: { key: user.id } },
     });
 
@@ -120,21 +123,55 @@ export default function TeamCollaboration() {
     ch.on('presence', { event: 'sync' }, () => {
       const state = ch.presenceState();
       setPresence(new Set(Object.keys(state)));
+      logPresenceEvent({
+        organizationId: organization.id, userId: user.id, channel: channelName,
+        event: 'presence_sync', metadata: { online: Object.keys(state).length },
+      });
+    });
+
+    ch.on('presence', { event: 'join' }, ({ key }) => {
+      logPresenceEvent({ organizationId: organization.id, userId: user.id, channel: channelName, event: 'connect', metadata: { joined: key } });
+    });
+    ch.on('presence', { event: 'leave' }, ({ key }) => {
+      logPresenceEvent({ organizationId: organization.id, userId: user.id, channel: channelName, event: 'disconnect', metadata: { left: key } });
     });
 
     ch.on('broadcast', { event: 'typing' }, ({ payload }) => {
       if (payload.user_id === user.id) return;
       setTypingUsers((prev) => ({ ...prev, [payload.user_id]: Date.now() }));
+      if (payload.sent_at) {
+        logPresenceEvent({
+          organizationId: organization.id, userId: user.id, channel: channelName,
+          event: 'typing_received', latencyMs: Date.now() - payload.sent_at,
+          metadata: { from: payload.user_id },
+        });
+      }
     });
 
     ch.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
         await ch.track({ online_at: new Date().toISOString() });
+        logPresenceEvent({
+          organizationId: organization.id, userId: user.id, channel: channelName,
+          event: 'subscribed', latencyMs: Math.round(performance.now() - connectStart),
+        });
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        logPresenceEvent({
+          organizationId: organization.id, userId: user.id, channel: channelName,
+          event: 'reconnect', metadata: { status },
+        });
       }
     });
 
     channelRef.current = ch;
-    return () => { supabase.removeChannel(ch); channelRef.current = null; };
+    return () => {
+      logPresenceEvent({
+        organizationId: organization.id, userId: user.id, channel: channelName,
+        event: 'disconnect', metadata: { reason: 'cleanup' },
+      });
+      supabase.removeChannel(ch);
+      channelRef.current = null;
+    };
   }, [user, organization, thread]);
 
   // prune stale typing indicators
@@ -167,7 +204,7 @@ export default function TeamCollaboration() {
   const handleType = () => {
     const ch = channelRef.current;
     if (!ch || !user) return;
-    ch.send({ type: 'broadcast', event: 'typing', payload: { user_id: user.id } });
+    ch.send({ type: 'broadcast', event: 'typing', payload: { user_id: user.id, sent_at: Date.now() } });
   };
 
   const send = async () => {
