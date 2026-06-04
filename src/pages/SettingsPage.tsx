@@ -24,6 +24,7 @@ import { RecoveryCodes } from '@/components/settings/RecoveryCodes';
 import { TotpChallenge } from '@/components/settings/TotpChallenge';
 import { MembershipRequests } from '@/components/settings/MembershipRequests';
 import { UserManagementPanel } from '@/components/settings/UserManagementPanel';
+import RolePermissionsPanel from '@/components/settings/RolePermissionsPanel';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { requestPushPermission, sendNotification, watchNotificationPermission, NotificationCategory } from '@/lib/notify';
 
@@ -273,6 +274,7 @@ const SettingsPage = () => {
 
       <OrganizationCard />
       <UserManagementPanel />
+      <RolePermissionsPanel />
 
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
