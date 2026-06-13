@@ -428,12 +428,20 @@ export default function VoiceBriefings() {
             <Input className="pl-8 h-9" placeholder="Search briefings by title…" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
           <div className="flex items-center gap-1 flex-wrap">
-            {(['all', 'unplayed', 'played', 'assigned'] as const).map((f) => (
-              <Button key={f} size="sm" variant={filter === f ? 'default' : 'outline'}
-                className="h-7 px-2 text-xs capitalize" onClick={() => setFilter(f)}>
-                {f === 'assigned' ? 'To me' : f}
-              </Button>
-            ))}
+            {(['all', 'unplayed', 'played', 'assigned'] as const).map((f) => {
+              const inboxCount = f === 'assigned'
+                ? briefings.filter((b) => (assignedMap[b.id] ?? []).includes(user?.id ?? '') && !playedIds.has(b.id)).length
+                : 0;
+              return (
+                <Button key={f} size="sm" variant={filter === f ? 'default' : 'outline'}
+                  className="h-7 px-2 text-xs capitalize gap-1" onClick={() => setFilter(f)}>
+                  {f === 'assigned' ? 'Inbox' : f}
+                  {f === 'assigned' && inboxCount > 0 && (
+                    <Badge variant="destructive" className="h-4 px-1 text-[10px]">{inboxCount}</Badge>
+                  )}
+                </Button>
+              );
+            })}
             {(search || filter !== 'all') && (
               <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={clearFilters}>
                 Clear
