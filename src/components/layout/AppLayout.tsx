@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, Receipt, PiggyBank, Target, Sparkles,
   Briefcase, TrendingUp, BarChart3, Bell, ListChecks,
-  Settings, ChevronLeft, ChevronRight, LogOut, Building2, Network, Menu,
+  Settings, ChevronLeft, ChevronRight, LogOut, Building2, Network, Menu, ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import LanguageSelector from '@/components/LanguageSelector';
@@ -43,8 +43,9 @@ const SidebarBody = ({
   unreadCount: number;
 }) => {
   const { t } = useTranslation();
-  const { organization } = useOrganization();
+  const { organization, hasAnyRole } = useOrganization();
   const location = useLocation();
+  const isAdmin = hasAnyRole(['owner', 'ceo']);
 
   const financeItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: t('nav.dashboard') },
@@ -60,6 +61,7 @@ const SidebarBody = ({
     { to: '/dashboard/ai-insights', icon: Sparkles, label: t('nav.aiInsights') },
     { to: '/dashboard/notifications', icon: Bell, label: t('nav.notifications') },
     { to: '/dashboard/organization', icon: Network, label: 'Organization' },
+    ...(isAdmin ? [{ to: '/dashboard/roles', icon: ShieldCheck, label: 'Role Management' }] : []),
     { to: '/dashboard/settings', icon: Settings, label: t('nav.settings') },
   ];
 
