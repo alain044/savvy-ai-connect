@@ -11,10 +11,9 @@ const RoleManagementPage = () => {
   if (loading) return null;
   if (!isAdmin) {
     return (
-      <AccessDenied
-        title="Admins only"
-        description="Role and permission management is restricted to organization Owners and CEOs."
-      />
+      <div className="p-6 max-w-3xl mx-auto">
+        <AccessDenied message="Role and permission management is restricted to organization Owners and CEOs." />
+      </div>
     );
   }
 
