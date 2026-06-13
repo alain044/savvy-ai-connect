@@ -25,6 +25,7 @@ import { TotpChallenge } from '@/components/settings/TotpChallenge';
 import { MembershipRequests } from '@/components/settings/MembershipRequests';
 import { UserManagementPanel } from '@/components/settings/UserManagementPanel';
 import RolePermissionsPanel from '@/components/settings/RolePermissionsPanel';
+import TelemetryPanel from '@/components/settings/TelemetryPanel';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { requestPushPermission, sendNotification, watchNotificationPermission, NotificationCategory } from '@/lib/notify';
 
@@ -275,6 +276,7 @@ const SettingsPage = () => {
       <OrganizationCard />
       <UserManagementPanel />
       <RolePermissionsPanel />
+      <TelemetryPanel />
 
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">

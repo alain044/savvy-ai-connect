@@ -11,3 +11,7 @@ verify_jwt = false
 
 [functions.check-price-alerts]
 verify_jwt = false
+
+[functions.module-guard]
+verify_jwt = false
+
