@@ -15,3 +15,8 @@ verify_jwt = false
 [functions.module-guard]
 verify_jwt = false
 
+[functions.rbac-admin]
+verify_jwt = false
+
+
+
